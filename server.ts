@@ -15,10 +15,11 @@ import 'console-error';
 // ResponseBody types
 interface ResponseBody {
   statusCode: number;
+  error: boolean;
 }
 
 interface ErrorResponseBody extends ResponseBody {
-  error: boolean;
+  error: true;
   errorMessage: string;
 }
 
@@ -34,7 +35,7 @@ app.use(express.json());
 // logging middleware
 app.use((req, _, next) => {
   console.info('------------------------------------------------');
-  console.info(`New request for: ${req.url}` );
+  console.info(`New request for: ${req.url}`);
   console.info(`Method: ${req.method}`);
   next();
 });
@@ -43,7 +44,7 @@ app.use((req, _, next) => {
 
 app.get('/', (_, res) => {
   const jsonResponse = {
-    apiVersion: '0.0.1',    // TODO store version somewhere else
+    apiVersion: process.env.npm_package_version,
     endpoints: [
       '/',
     ],
