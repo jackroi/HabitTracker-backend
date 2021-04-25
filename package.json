@@ -7,6 +7,7 @@
     "start": "node build/server.js",
     "compile": "npx tsc",
     "dev": "npx tsc-watch --noClear --onSuccess 'node ./build/server.js'",
+    "init-db": "node build/init-db.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "postversion": "git push && git push --tags"
   },
