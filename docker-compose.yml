@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  api:
+    image: node:14
+    container_name: api
+    working_dir: /app
+    command: npm start
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+
+  db:
+    image: mongo:4.4.5-bionic
+    container_name: db
+    ports:
+      - "27017:27017"
