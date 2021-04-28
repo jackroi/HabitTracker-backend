@@ -4,12 +4,12 @@ import 'console-info';
 import 'console-warn';
 import 'console-error';
 
-import * as user from './User';
+import * as user from './models/User';
 // import { } from './User';
-import * as habit from './Habit';
-import { Habit } from './Habit';
-import * as historyEntry from './HistoryEntry';
-import { HistoryEntry, HistoryEntryType } from './HistoryEntry';
+import * as habit from './models/Habit';
+import { Habit } from './models/Habit';
+import * as historyEntry from './models/HistoryEntry';
+import { HistoryEntry, HistoryEntryType } from './models/HistoryEntry';
 
 
 // TODO maybe put db name and other inside .env
@@ -37,7 +37,7 @@ mongoose.connect(DB_URL, {
     email: 'test@gmail.com',
     password: 'test',
     registrationDate: new Date(2021, 0, 10),
-  }
+  };
   const testUserDocument = user.newUser(testUser);
   return testUserDocument.save();
 })
@@ -50,21 +50,21 @@ mongoose.connect(DB_URL, {
       creationDate: new Date(2021, 1, 2),
       category: 'Learning',
       archived: false,
-      userId: testUserDocument._id,
+      userEmail: testUserDocument.email,
     },
     {
       name: 'Run',
       creationDate: new Date(2021, 2, 5),
       category: 'Sport',
       archived: false,
-      userId: testUserDocument._id,
+      userEmail: testUserDocument.email,
     },
     {
       name: 'Read',
       creationDate: new Date(2021, 2, 7),
       category: 'Learning',
       archived: false,
-      userId: testUserDocument._id,
+      userEmail: testUserDocument.email,
     },
   ];
   return habit.getModel().insertMany(testUserHabits);

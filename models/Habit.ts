@@ -10,18 +10,18 @@ export interface Habit {
   archived: boolean;
 
   // TODO valutare se è meglio sostituirlo con userEmail
-  userId: mongoose.Schema.Types.ObjectId | User;    // TODO se rimane così rinominare in 'user'
+  userEmail: string | User;    // TODO se rimane così rinominare in 'user'
 }
 
 interface HabitBaseDocument extends Habit, mongoose.Document {
 }
 
 export interface HabitDocument extends HabitBaseDocument {
-  userId: UserDocument['_id'];
+  userEmail: UserDocument['_id'];
 }
 
 export interface HabitPopulatedDocument extends HabitBaseDocument {
-  userId: UserDocument;
+  userEmail: UserDocument;
 }
 
 export interface HabitModel extends mongoose.Model<HabitDocument> {
@@ -39,8 +39,8 @@ export const isHabit = (arg: any): arg is Habit => {
     && typeof(arg.category) == 'string'
     && arg.archived
     && typeof(arg.archived) == 'boolean'
-    && arg.userId
-    && (arg.userId instanceof mongoose.Schema.Types.ObjectId || isUser(arg.userId));
+    && arg.userEmail
+    && (typeof(arg.category) == 'string' || isUser(arg.userEmail));
 };
 
 
@@ -61,8 +61,8 @@ const HabitSchema = new mongoose.Schema<HabitDocument, HabitModel>({
     type: mongoose.SchemaTypes.Boolean,
     required: true,
   },
-  userId: {
-    type: mongoose.SchemaTypes.ObjectId,
+  userEmail: {
+    type: mongoose.SchemaTypes.String,
     required: true,
   },
 });
