@@ -1,0 +1,177 @@
+FORMAT: 1A
+
+
+# Habit Tracker API
+
+A simple API allowing consumers to manage habits.
+
+# Habit Tracker API root [/]
+
+This resource offers the initial API affordances in the form of the links in the JSON body.
+
+## Retrieve the entry point [GET]
+
++ Response 200 (application/json)
+
+        {
+            "apiVersion": "0.0.1",
+            "endpoints": [
+                "/",
+                "/login"
+            ]
+        }
+
+
+# Group Authentication
+
+Endpoints related to authentication.
+
+## Registration [/register]
+
+### Register [POST]
+
+Register to the Habit Trackeer API.
+
++ name (string) - The user's name
++ email (string) - The user's email
++ password (string) - The user's password
+
++ Request Register (application/json)
+
+        {
+            "name": "Test",
+            "email": "test@gmail.com",
+            "password": "test"
+        }
+
++ Response 201 (application/json)
+
+        {
+            "statusCode": 201,
+            "error": false,
+            "token": "jwt-token"
+        }
+
+## Login [/login]
+
+### Login [GET]
+
+Get the token for accessing the protected API endpoints.
+Basic authentication.
+
++ Request Login (application/json)
+
+    + Headers
+
+            Authorization: Basic dGVzdEBnbWFpbC5jb206dGVzdA==
+
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+            "token": "jwt-token"
+        }
+
+# Group Habits
+
+Resources related to Habits in the API.
+
+## Habit collection [/habits]
+
+### List all habits [GET]
+
+Retrive the list of habits of the logged in user.
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+            "habits": [
+                {
+                    "id": "6086e696cdcf2b0858e8e8b5",
+                    "name": "Study",
+                    "creationDate": "2021-02-02T00:00:00.000Z",
+                    "category": "Learning",
+                    "archived": false
+                },
+                {
+                    "id": "6086e696cdcf2b0858e8e8b6",
+                    "name": "Run",
+                    "creationDate": "2021-03-05T00:00:00.000Z",
+                    "category": "Sport",
+                    "archived": false
+                },
+                {
+                    "id": "6086e696cdcf2b0858e8e8b7",
+                    "name": "Read",
+                    "creationDate": "2021-03-07T00:00:00.000Z",
+                    "category": "Learning",
+                    "archived": false
+                }
+            ]
+        }
+
+### Create a new habit [POST]
+
+You may create your own habit using this action. It takes a JSON object
+containing the habit name and category.
+It returns the newly created habit.
+
++ name (string) - The habit name
++ category (string) - The habit category
+
++ Request Create new Habit (application/json)
+
+        {
+            "name": "Run",
+            "category": "Sport"
+        }
+
+
++ Response 201 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+            "habit": {
+                "id": "6086e696cdcf2b0858e8e8b6",
+                "name": "Run",
+                "creationDate": "2021-03-05T00:00:00.000Z",
+                "category": "Sport",
+                "archived": false
+            }
+        }
+
+## Habit [/habits/{habit_id}]
+
+This resource represent a single habit.
+
++ Parameters
+    + habit_id (string) - The ID of the habit
+
+### View a habit detail [GET]
+
+Retrive the habit detail.
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+            "habit": {
+                "id": "6086e696cdcf2b0858e8e8b6",
+                "name": "Run",
+                "creationDate": "2021-03-05T00:00:00.000Z",
+                "category": "Sport",
+                "archived": false
+            }
+        }
+
+### Delete [DELETE]
+
+Delete the habit.
+
++ Response 204
