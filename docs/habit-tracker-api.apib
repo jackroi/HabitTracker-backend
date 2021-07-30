@@ -7,7 +7,7 @@ A simple API allowing consumers to manage habits.
 
 # Habit Tracker API root [/]
 
-This resource offers the initial API affordances in the form of the links in the JSON body.
+This resource offers metadata (API version and list of endpoints) about the APIs.
 
 ## Retrieve the entry point [GET]
 
@@ -22,15 +22,16 @@ This resource offers the initial API affordances in the form of the links in the
         }
 
 
-# Group Authentication
+# Group Authentication and Account management
 
-Endpoints related to authentication.
+Endpoints related to the authentication process and the management of the account.
 
 ## Registration [/register]
 
 ### Register [POST]
 
-Register to the Habit Trackeer API.
+Register to the Habit Tracker API.
+Returns the JWT token.
 
 + name (string) - The user's name
 + email (string) - The user's email
@@ -56,8 +57,11 @@ Register to the Habit Trackeer API.
 
 ### Login [GET]
 
-Get the token for accessing the protected API endpoints.
+Get the JWT token to access to the protected API endpoints.
+
 Basic authentication.
+- Basic authentication username: email
+- Basic authentication password: password
 
 + Request Login (application/json)
 
@@ -74,15 +78,58 @@ Basic authentication.
             "token": "jwt-token"
         }
 
+## Account management [/user]
+
+### View information about the account [GET]
+
+Retrieve information on the logged in user account.
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+            "user": {
+                "name": "Test",
+                "email": "test@gmail.com",
+                "registrationDate": "2020-11-20T00:00:00.000Z"
+            }
+        }
+
+### Delete the account [DELETE]
+
+Delete the account of the logged in user.
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+        }
+
+
 # Group Habits
 
 Resources related to Habits in the API.
 
-## Habit collection [/habits]
+## Habit collection [/habits{?limit}{?skip}{?category}{?filter}]
+
+This resource represents a collection of habits.
 
 ### List all habits [GET]
 
 Retrive the list of habits of the logged in user.
+
++ Parameters
+
+    + limit (number, optional) - The maximum number of habits to return.
+        + Default: `50`
+    + skip (number, optional) - The number of habits to skip.
+        + Default: `0`
+    + category (string, optional) - The category of habits to return. By default returns all the habits.
+        + Default: ``
+    + filter (enum, optional) - The type of habits to return (valid options are `all`, `archived`, `active`).
+        + Default: `active`
 
 + Response 200 (application/json)
 
@@ -116,8 +163,8 @@ Retrive the list of habits of the logged in user.
 
 ### Create a new habit [POST]
 
-You may create your own habit using this action. It takes a JSON object
-containing the habit name and category.
+Create a new habit.
+It takes a JSON object containing the habit name and category.
 It returns the newly created habit.
 
 + name (string) - The habit name
@@ -130,11 +177,10 @@ It returns the newly created habit.
             "category": "Sport"
         }
 
-
 + Response 201 (application/json)
 
         {
-            "statusCode": 200,
+            "statusCode": 201,
             "error": false,
             "habit": {
                 "id": "6086e696cdcf2b0858e8e8b6",
@@ -147,14 +193,14 @@ It returns the newly created habit.
 
 ## Habit [/habits/{habit_id}]
 
-This resource represent a single habit.
+This resource represents a single habit.
 
 + Parameters
-    + habit_id (string) - The ID of the habit
+    + habit_id (string) - The ID of the habit.
 
-### View a habit detail [GET]
+### View the habit details [GET]
 
-Retrive the habit detail.
+Retrive the habit details.
 
 + Response 200 (application/json)
 
@@ -170,8 +216,238 @@ Retrive the habit detail.
             }
         }
 
-### Delete [DELETE]
+### Delete the habit [DELETE]
 
 Delete the habit.
 
-+ Response 204
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false
+        }
+
+## Habit history [/habits/{habit_id}/history]
+
+This resource represents the history of a single habit.
+
++ Parameters
+    + habit_id (string) - The ID of the habit.
+
+### View the history of the habit [GET]
+
+Retrieve the history of the habit.
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+            "history": [
+                {
+                    "id": "6086e696cdcf2b0858e8e8b6",
+                    "date": "2021-03-05T00:00:00.000Z",
+                    "type": 'completed'
+                },
+                {
+                    "id": "6086e696cdcf2b0858e8e8b7",
+                    "date": "2021-03-06T00:00:00.000Z",
+                    "type": 'skipped'
+                },
+                {
+                    "id": "6086e696cdcf2b0858e8e8b8",
+                    "date": "2021-03-07T00:00:00.000Z",
+                    "type": 'completed'
+                }
+            ]
+        }
+
+### Add a new entry to the habit history [POST]
+
+Add a new entry to the habit history.
+It takes a JSON object containing the type of history entry.
+
++ type (string) - The type of the history entry (`completed`, `skipped`)
+
++ Request Add new entry to the Habit history (application/json)
+
+        {
+            "type": "completed"
+        }
+
++ Response 201 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false
+        }
+
+
+## Habit history entry [/habits/{habit_id}/history/{hist_id}]
+
+This resource represents a single history entry of a habit.
+
++ Parameters
+    + habit_id (string) - The ID of the habit.
+    + hist_id (string) - The ID of the history entry.
+
+### Update the entry of the habit history [PUT]
+
+Update (the type of) an entry of the habit history.
+It takes a JSON object containing the new type of the history entry.
+
++ type (string) - The type of the history entry (`completed`, `skipped`)
+
++ Request Update entry of the Habit history (application/json)
+
+        {
+            "type": "skipped"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false
+        }
+
+### Delete the entry from the habit history [DELETE]
+
+Delete the entry from the habit history.
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false
+        }
+
+
+# Group Statistics
+
+Resources related to statistics in the API.
+
+## General statistics [/stats]
+
+This resource represents the general statistics of the logged in user.
+
+### Get general statistics [GET]
+
+Retrive general statistics about the logged in user.
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+            "stats": {
+                "habitCount": 3,
+                "TODO": "TODO: other stats"
+            }
+        }
+
+## Habit statistics [/stats/{habit_id}]
+
+This resource represents the statistics of a single habit.
+
++ Parameters
+    + habit_id (string) - The ID of the habit.
+
+### Get habit statistics [GET]
+
+Retrive statistics about the habit.
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+            "stats": {
+                "bestStreak": 5,
+                "TODO": "TODO: other stats"
+            }
+        }
+
+
+# Group Categories
+
+Resources related to Categories in the API.
+
+## Category collection [/categories]
+
+This resource represents a collection of categories.
+
+### List all categories [GET]
+
+Retrive the list of categories of habits of the logged in user.
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+            "categories": [
+                "Learning",
+                "Sport",
+                "Productivity"
+            ]
+        }
+
+### Create a new category [POST]
+
+Create a new category.
+It takes a JSON object containing the category name.
+
++ name (string) - The category name
+
++ Request Create new Category (application/json)
+
+        {
+            "name": "Health"
+        }
+
++ Response 201 (application/json)
+
+        {
+            "statusCode": 201,
+            "error": false
+        }
+
+## Category [/categories/{category_name}]
+
+This resource represents a single habit.
+
++ Parameters
+    + category_name (string) - The name of the category.
+
+### Update category name [PUT]
+
+Update the category name.
+It takes a JSON object containing the new category name.
+
++ name (string) - The new name of the category
+
++ Request Update category name (application/json)
+
+        {
+            "name": "Misc"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false
+        }
+
+### Delete the category [DELETE]
+
+Delete the entry from the habit history.
+TODO: Only if the category is not used.
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false
+        }

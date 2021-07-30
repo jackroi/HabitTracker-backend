@@ -11,7 +11,7 @@
 
 ## /user (???)
 - GET: restituisce informazioni sull'utente loggato
-- PUT: modifica account utente
+- PUT: modifica account utente  (TODO ???)
 - DELETE: elimina account utente (???)
 
 ## /habits
