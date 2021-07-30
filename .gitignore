@@ -233,7 +233,7 @@ $RECYCLE.BIN/
 
 
 # Typescript compiler output
-build/
+dist/
 
 # API generated documentation
 docs/*.html

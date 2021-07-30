@@ -4,10 +4,10 @@
   "description": "Backend that provides REST API for HabitTracker system",
   "main": "server.js",
   "scripts": {
-    "start": "node build/server.js",
-    "compile": "npx tsc",
-    "dev": "npx tsc-watch --noClear --onSuccess 'node ./build/server.js'",
-    "init-db": "node build/init-db.js",
+    "start": "node ./dist/server.js",
+    "compile": "tsc",
+    "dev": "tsc-watch --noClear --onSuccess \"node ./dist/server.js\"",
+    "init-db": "node dist/init-db.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "postversion": "git push && git push --tags"
   },
