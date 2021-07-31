@@ -3,6 +3,30 @@
  *
  */
 
+console.info('Server starting...');
+
+// load .env into process.env
+import dotenv = require('dotenv');
+const result = dotenv.config()
+
+if (result.error) {
+  console.error('Unable to load \'.env\' file. Please provide one to store the JWT secret key');
+  process.exit(-1);
+}
+if (!process.env.JWT_SECRET
+  || !process.env.DB_HOST
+  || !process.env.DB_PORT
+  || !process.env.DB_NAME
+  || !process.env.SERVER_PORT) {
+  console.error('\'.env\' file loaded but doesn\'t contain some required key-value pairs');
+  process.exit(-1);
+}
+if (!process.env.npm_package_version) {
+  console.error('Missing environment variabile npm_package_version');
+  process.exit(-1);
+}
+
+
 import express, { Request, Response, NextFunction } from 'express';
 import http from 'http';                      // HTTP module
 import cors from 'cors';
@@ -11,7 +35,6 @@ import passportHTTP from 'passport-http';     // implements Basic authentication
 import jsonwebtoken from 'jsonwebtoken';      // JWT generation
 import jwt from 'express-jwt';                // JWT parsing middleware for express
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 // add colorization to logs
 import 'console-info';
 import 'console-warn';
@@ -20,18 +43,23 @@ import 'console-error';
 import * as user from './models/User';
 import * as habit from './models/Habit';
 
+// import routes
+import usersRouter from './routes/users';
+import habitsRouter from './routes/habits';
+import statsRouter from './routes/stats';
+import categoriesRouter from './routes/categories';
 
+import {
+  RegistrationRequestBody,
+  isRegistrationRequestBody,
+} from './httpTypes/requests';
 
-// ResponseBody types
-interface ResponseBody {
-  statusCode: number;
-  error: boolean;
-}
-
-interface ErrorResponseBody extends ResponseBody {
-  error: true;
-  errorMessage: string;
-}
+import {
+  RootResponseBody,
+  ErrorResponseBody,
+  LoginResponseBody,
+  RegistrationResponseBody,
+} from './httpTypes/responses';
 
 declare global {
   namespace Express {
@@ -42,38 +70,31 @@ declare global {
   }
 }
 
-
-console.info('Server starting...');
-
-
-// load .env into process.env
-const result = dotenv.config();
-if (result.error) {
-  console.error('Unable to load ".env" file');
-  process.exit(-1);
+interface TokenData {
+  name: string;
+  email: string;
 }
 
-console.info('".env" file loaded');
-
-if(!process.env.JWT_SECRET) {
-  console.error('JWT_SECRET=<secret> key-value pair was not found in ".env"');
-  process.exit(-1);
+function generateJwtToken(tokenData: TokenData): string {
+  console.info(`Generating token for ${tokenData.email}`);
+  return jsonwebtoken.sign(tokenData, process.env.JWT_SECRET as string);
 }
 
 
+
+// Express application instance
 const app = express();
 
-const auth = jwt({
-  secret: process.env.JWT_SECRET,
-  algorithms: ['HS256'],
-});
 
-
+// Configure HTTP basic authentication strategy
 passport.use(new passportHTTP.BasicStrategy((username, password, done) => {
   // delegate function we provide to passport middleware
   // to verify user credentials
 
   console.info(`New login attempt from ${username}`);
+
+  // TODO eventualmente trasformare con await/async/catch o then/catch
+
   user.getModel().findOne({ email: username }, null, null, (err, userDocument) => {
     if (err) {
       console.error('Error occurred querying the database while logging in');
@@ -128,30 +149,26 @@ app.use((req, _, next) => {
 
 // API routes
 
-app.get('/', (_, res) => {
-  const jsonResponse = {
-    apiVersion: process.env.npm_package_version,
+// Version of the application
+const version = process.env.npm_package_version;
+
+// Root endpoint
+app.get(`/v${version}`, (_, res) => {
+  const body: RootResponseBody = {
+    error: false,
+    statusCode: 200,
+    apiVersion: version,
     endpoints: [
       '/',
       '/login',
+      // TODO aggiungere tutti gli endpoint
     ],
   };
-  res.status(200).json(jsonResponse);
+  return res.status(body.statusCode).json(body);
 });
 
 
-
-interface TokenData {
-  name: string;
-  email: string;
-}
-const generateJwtToken = (tokenData: TokenData): string => {
-  console.info(`Generating token for ${tokenData.email}`);
-  return jsonwebtoken.sign(tokenData, process.env.JWT_SECRET as string);
-}
-
-
-app.post('/register', async (req, res, next) => {
+app.post(`/v${version}/register`, async (req, res, next) => {
   /**
    * body:
    * - name: string
@@ -160,6 +177,17 @@ app.post('/register', async (req, res, next) => {
    */
 
   // TODO pensare se mettere try catch
+  // TODO valutare se fare un refactoring del flow di validazione
+
+  if (!isRegistrationRequestBody(req.body)) {
+    console.warn('Wrong registration body content ' + JSON.stringify(req.body, null, 2));
+    const errorBody: ErrorResponseBody = {
+      error: true,
+      statusCode: 400,
+      errorMessage: 'Wrong registration body content',
+    };
+    return next(errorBody);
+  }
 
   const newUser = {
     name: req.body.name,
@@ -213,31 +241,35 @@ app.post('/register', async (req, res, next) => {
     email: newUser.email,
   });
 
-  return res.status(201).json({
-    statusCode: 201,
+  const body: RegistrationResponseBody = {
     error: false,
+    statusCode: 200,
     token: jwtToken,
-  });
+  };
+
+  return res.status(body.statusCode).json(body);
 });
 
 
 // login endpoint uses passport middleware to check
 // user credentials before generating a new JWT
-app.get('/login', passport.authenticate('basic', { session: false }), (req, res, next) => {
+app.get(`/v${version}/login`, passport.authenticate('basic', { session: false }), (req, res, next) => {
 
   // If we reach this point, the user is successfully authenticated and
   // has been injected into req.user
 
   // verify that user has really been injected into req
   if (!req.user) {
-    console.error('req.user is undefined');
-    let error: ErrorResponseBody = {      // TODO magari fare una classe apposta che crei questo errore
+    console.error('Internal login error: req.user is undefined');
+    let errorBody: ErrorResponseBody = {      // TODO magari fare una classe apposta che crei questo errore
       statusCode: 500,
       error: true,
       errorMessage: 'Internal server error',
     };
-    return next(error);
+    return next(errorBody);
   }
+
+  console.info('Login granted. Generating token...');
 
   // generate a JWT with the useful user data and return it as response
   const jwtToken = generateJwtToken({
@@ -245,113 +277,62 @@ app.get('/login', passport.authenticate('basic', { session: false }), (req, res,
     email: req.user.email,
   });
 
-  return res.status(200).json({
-    statusCode: 200,
+  const body: LoginResponseBody = {
     error: false,
-    token: jwtToken
-  });
+    statusCode: 200,
+    token: jwtToken,
+  };
+
+  return res.status(body.statusCode).json(body);
 });
 
 
 
-
-app.route('/habits').get(auth, async (req, res, next) => {
-  let { filter, skip, limit } = req.query;
-
-  // filter for mongodb query
-  const queryFilter: { userEmail: string, archived?: boolean } = {
-    userEmail: req.user!.email,
-  };
-
-  // filter param validation
-  filter = filter || 'not_archived';
-  if (filter === 'archived') {
-    queryFilter.archived = true;
-  } else if (filter === 'not_archived') {
-    queryFilter.archived = false;
-  } else if (filter === 'all') {
-    // do nothing
-  } else {
-    // filter has an invalid value
-    console.warn('Invalid query param "filter"');
-    queryFilter.archived = false;     // use default
-  }
-
-  // skip and limit params validation
-  let skipNumber: number = parseInt(skip as string || '0') || 0;
-  let limitNumber: number = parseInt(limit as string || '50') || 50;
-
-  const habits = await habit.getModel()
-    .find(queryFilter, { userEmail: 0, __v: 0 })
-    .skip(skipNumber)
-    .limit(limitNumber);
-
-  const returnedHabits = habits.map((habit) => ({
-    id: habit._id,
-    name: habit.name,
-    creationDate: habit.creationDate,
-    category: habit.category,
-    archived: habit.archived,
-  }));
-
-  res.status(200).json({
-    statusCode: 200,
-    error: false,
-    habits: returnedHabits,
-  });
-})
-.post(auth, (req, res, next) => {
-  const newHabit = {
-    name: req.body.name,
-    category: req.body.category,
-    creationDate: new Date(),
-    archived: false,
-    userEmail: req.user!.email,
-  };
-});
-
+// All the other endpoints
+app.use(`/v${version}/users`, usersRouter);
+app.use(`/v${version}/habits`, habitsRouter);
+app.use(`/v${version}/stats`, statsRouter);
+app.use(`/v${version}/categories`, categoriesRouter);
 
 
 
 // error handling middleware
 app.use((err: ErrorResponseBody | jwt.UnauthorizedError, _: Request, res: Response, __: NextFunction) => {
-  if (err instanceof jwt.UnauthorizedError) {     // authentication related error
-    console.warn(`jwt.UnauthorizedError\n${JSON.stringify(err, null, 2)}`)
-    return res.status(err.status).json({
-      statusCode: err.status,
-      error: true,
-      errorMessage: err.message,
-    });
-  } else {                                        // other error types
-    const errString = JSON.stringify(err, null, 2);
-    if (err.statusCode.toString().charAt(0) === '5') {      // 5xx internal server error
-      console.error(`Internal server error\n${errString}`);
-    } else {
-      console.warn(`Error\n${errString}`);
-    }
-    return res.status(err.statusCode).json(err);
+  let errorBody: ErrorResponseBody;
+  if (err instanceof jwt.UnauthorizedError) {
+    errorBody = { error: true, statusCode: err.status, errorMessage: 'User unauthorized' };
   }
+  else {
+    errorBody = err;
+  }
+  console.error('Request error: ' + JSON.stringify(errorBody));
+  return res.status(errorBody.statusCode || 500).json(errorBody);
 });
 
 
 // last middleware (request with invalid endpoint)
 app.use((_, res) => {
   console.warn('Invalid endpoint');
-  const errorResponse: ErrorResponseBody = {
+  const errorBody: ErrorResponseBody = {
     statusCode: 404,
     error: true,
     errorMessage: 'Invalid endpoint',
   };
-  res.status(404).json(errorResponse);
+  res.status(errorBody.statusCode).json(errorBody);
 });
 
 
 
+// Connect to mongodb and launch the HTTP server trough Express
 
-// TODO maybe in .env
-const PORT = 8080;
+const {
+  DB_HOST,
+  DB_PORT,
+  DB_NAME,
+  SERVER_PORT,
+} = process.env;
 
-mongoose.connect('mongodb://habit-tracker-db:27017/habittracker', {
+mongoose.connect(`mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
@@ -362,7 +343,7 @@ mongoose.connect('mongodb://habit-tracker-db:27017/habittracker', {
 })
 .then(() => {
   const server = http.createServer(app);
-  server.listen(PORT, () => console.info(`HTTP Server started on port ${PORT}`));
+  server.listen(SERVER_PORT, () => console.info(`HTTP Server started on port ${SERVER_PORT}`));
 })
 .catch((err) => {
   console.error('Error occurred during initialization');
