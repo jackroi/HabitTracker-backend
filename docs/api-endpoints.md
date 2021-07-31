@@ -36,8 +36,8 @@
 
 ## /categories
 - GET: restituisce lista categorie
-- POST: aggiunge una categoria
+- POST: aggiunge una categoria ??? (probabilmente non serve)
 
 ## /categories/:id (???)
 - PUT: modifica categoria (???)
-- DELETE: modifica categoria (???)
+- DELETE: modifica categoria  ??? (probabilmente non serve)
