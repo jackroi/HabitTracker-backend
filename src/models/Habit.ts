@@ -10,7 +10,8 @@ export interface Habit {
   archived: boolean;
 
   // TODO valutare se è meglio sostituirlo con userEmail
-  userEmail: string | User;    // TODO se rimane così rinominare in 'user'
+  userEmail: string | User;     // TODO se rimane così rinominare in 'user'
+                                // TODO probabilmente togliere '|| User'
 }
 
 interface HabitBaseDocument extends Habit, mongoose.Document {

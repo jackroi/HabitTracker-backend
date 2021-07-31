@@ -180,7 +180,7 @@ app.post(`/v${version}/register`, async (req, res, next) => {
   // TODO valutare se fare un refactoring del flow di validazione
 
   if (!isRegistrationRequestBody(req.body)) {
-    console.warn('Wrong registration body content ' + JSON.stringify(req.body, null, 2));
+    console.warn(`Wrong registration body content\n${JSON.stringify(req.body, null, 2)}`);
     const errorBody: ErrorResponseBody = {
       error: true,
       statusCode: 400,
@@ -289,7 +289,7 @@ app.get(`/v${version}/login`, passport.authenticate('basic', { session: false })
 
 
 // All the other endpoints
-app.use(`/v${version}/users`, usersRouter);
+app.use(`/v${version}/user`, usersRouter);
 app.use(`/v${version}/habits`, habitsRouter);
 app.use(`/v${version}/stats`, statsRouter);
 app.use(`/v${version}/categories`, categoriesRouter);
