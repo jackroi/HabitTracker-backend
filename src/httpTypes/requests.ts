@@ -19,3 +19,14 @@ export function isRegistrationRequestBody(arg: any): arg is RegistrationRequestB
     && arg.password
     && typeof (arg.password) === 'string';
 }
+
+export interface UpdateCategoryNameRequestBody extends RequestBody {
+  name: string,
+}
+
+// Type guard function
+export function isUpdateCategoryNameRequestBody(arg: any): arg is UpdateCategoryNameRequestBody {
+  return arg
+    && arg.name           // It can't be the empty string
+    && typeof (arg.name) === 'string';
+}

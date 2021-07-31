@@ -35,3 +35,15 @@ export interface LoginResponseBody extends SuccessResponseBody {
 export interface RegistrationResponseBody extends SuccessResponseBody {
   token: string,
 }
+
+export interface GetUserResponseBody extends SuccessResponseBody {
+  user: {
+    name: string,
+    email: string,
+    registrationDate: string,
+  },
+}
+
+export interface GetCategoriesResponseBody extends SuccessResponseBody {
+  categories: string[],
+}
