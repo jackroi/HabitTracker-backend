@@ -143,7 +143,7 @@ app.use((req, _, next) => {
   console.info(`New request for: ${req.url}`);
   console.info(`Method: ${req.method}`);
   console.info(`Query: ${JSON.stringify(req.query)}`);
-  console.info(`Body:\n${JSON.stringify(req.body, null, 2)}`);
+  console.info(`Body: ${JSON.stringify(req.body)}`);
   next();
 });
 
