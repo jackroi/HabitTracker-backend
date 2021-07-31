@@ -2,3 +2,20 @@
 
 export interface RequestBody {
 }
+
+export interface RegistrationRequestBody extends RequestBody {
+  name: string,
+  email: string,
+  password: string,
+}
+
+// Type guard function
+export function isRegistrationRequestBody(arg: any): arg is RegistrationRequestBody {
+  return arg
+    && arg.name           // It can't be the empty string
+    && typeof (arg.name) === 'string'
+    && arg.email
+    && typeof (arg.email) === 'string'
+    && arg.password
+    && typeof (arg.password) === 'string';
+}

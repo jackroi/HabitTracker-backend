@@ -27,3 +27,11 @@ export interface RootResponseBody extends SuccessResponseBody {
   apiVersion: string,
   endpoints: string[],
 }
+
+export interface LoginResponseBody extends SuccessResponseBody {
+  token: string,
+}
+
+export interface RegistrationResponseBody extends SuccessResponseBody {
+  token: string,
+}
