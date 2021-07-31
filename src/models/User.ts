@@ -2,6 +2,35 @@ import mongoose from 'mongoose';
 import crypto = require('crypto');
 
 
+/**
+ * Given a plain text password, returns the digest of that password with the salt used in the encryption
+ * @param pwd
+ * @returns
+ */
+ function hashPassword(pwd: string): { digest: string, salt: string } {
+
+  const salt = crypto.randomBytes(16).toString('hex'); // We use a random 16-bytes hex string for salt
+
+  // We use the hash function sha512 to hash both the password and salt to
+  // obtain a password digest
+  //
+  // From wikipedia: (https://en.wikipedia.org/wiki/HMAC)
+  // In cryptography, an HMAC (sometimes disabbreviated as either keyed-hash message
+  // authentication code or hash-based message authentication code) is a specific type
+  // of message authentication code (MAC) involving a cryptographic hash function and
+  // a secret cryptographic key.
+
+  const hmac = crypto.createHmac('sha512', salt);
+  hmac.update(pwd);
+  const digest = hmac.digest('hex'); // The final digest depends both by the password and the salt
+
+  return {
+    digest: digest,
+    salt: salt,
+  };
+}
+
+
 export interface User {
   name: string;
   email: string;
@@ -11,9 +40,7 @@ export interface User {
 }
 
 
-
 export interface UserDocument extends User, mongoose.Document {
-  setPassword: (pwd: string) => void;
   validatePassword: (pwd: string) => boolean;
 }
 
@@ -64,33 +91,19 @@ const UserSchema = new mongoose.Schema<UserDocument, UserModel>({
 });
 
 
-// add some methods to the user Schema
-
-const generateDigest = (pwd: string, salt: string): string => {
-  const hmac = crypto.createHmac('sha512', salt);
-  hmac.update(pwd);
-  return hmac.digest('hex');
-};
-
-UserSchema.methods.setPassword = function(this: UserDocument, pwd: string): void {
-  // TODO valutare uso di pbkdf2
-
-  const SALT_LENGTH = 16;
-  this.salt = crypto.randomBytes(SALT_LENGTH).toString('hex');
-  this.passwordDigest = generateDigest(pwd, this.salt);
-}
-
 UserSchema.methods.validatePassword = function(this: UserDocument, pwd: string): boolean {
-  // to validate the password, we compute the digest with the
+  // To validate the password, we compute the digest with the
   // same HMAC to check if it matches with the digest we stored
   // in the database.
-  const digest = generateDigest(pwd, this.salt);
 
-  return this.passwordDigest === digest;
+  const hmac = crypto.createHmac('sha512', this.salt);
+  hmac.update(pwd);
+  const digest = hmac.digest('hex');
+  return (this.passwordDigest === digest);
 }
 
 
-export const getSchema = () => {    // TODO capire se serve davvero
+export function getSchema() {
   return UserSchema;
 };
 
@@ -113,10 +126,15 @@ type NewUserParams = {
 export const newUser = (data: NewUserParams): UserDocument => {
   const userModel = getModel();
 
-  // TODO capire se va bene passare anche password, dato che
-  // TODO non è un campo di user
-  const user = new userModel(data);
-  user.setPassword(data.password);
+  const { digest, salt } = hashPassword(data.password);
 
-  return user;
+  const user: User = {
+    name: data.name,
+    email: data.email,
+    passwordDigest: digest,
+    salt: salt,
+    registrationDate: new Date(),
+  };
+
+  return new userModel(user);
 };
