@@ -216,6 +216,40 @@ Retrive the habit details.
             }
         }
 
+### Update the habit [PUT]
+
+Update the habit.
+It takes a JSON object containing at least one of the following fields: `name`, `category`, `archived`.
+
++ name (string) - The habit name
++ category (string) - The habit category
++ archived (boolean) - Whether the habit is archived or active
+
++ Request Update Habit name (application/json)
+
+        {
+            "name": "Run",
+        }
+
++ Request Update Habit category (application/json)
+
+        {
+            "category": "Sport",
+        }
+
++ Request Archive Habit (application/json)
+
+        {
+            "archived": true,
+        }
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+        }
+
 ### Delete the habit [DELETE]
 
 Delete the habit.
@@ -265,13 +299,15 @@ Retrieve the history of the habit.
 ### Add a new entry to the habit history [POST]
 
 Add a new entry to the habit history.
-It takes a JSON object containing the type of history entry.
+It takes a JSON object containing the date and the type of the history entry.
 
++ date (string) - The date of the history entry (ISO format)
 + type (string) - The type of the history entry (`completed`, `skipped`)
 
 + Request Add new entry to the Habit history (application/json)
 
         {
+            "date": "2021-03-08T00:00:00.000Z",
             "type": "completed"
         }
 
@@ -283,13 +319,13 @@ It takes a JSON object containing the type of history entry.
         }
 
 
-## Habit history entry [/habits/{habit_id}/history/{hist_id}]
+## Habit history entry [/habits/{habit_id}/history/{date}]
 
 This resource represents a single history entry of a habit.
 
 + Parameters
     + habit_id (string) - The ID of the habit.
-    + hist_id (string) - The ID of the history entry.
+    + date (string) - The date of the history entry formatted as YYYY-MM-DD.
 
 ### Update the entry of the habit history [PUT]
 
