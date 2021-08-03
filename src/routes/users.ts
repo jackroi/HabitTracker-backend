@@ -8,8 +8,8 @@ import { GetUserResponseBody, SuccessResponseBody } from '../httpTypes/responses
 
 import auth from '../middlewares/auth'
 
-import * as users from '../models/User';
-import * as habits from '../models/Habit';
+import * as user from '../models/User';
+import * as habit from '../models/Habit';
 
 
 const router = express.Router();
@@ -22,8 +22,8 @@ export default router;
  */
 router.get(`/`, auth, async (req, res, next) => {
   try {
-    const user = await users.getModel().findOne({ email: req.user!.email }).exec();
-    if (!user) {
+    const userInfo = await user.getModel().findOne({ email: req.user!.email }).exec();
+    if (!userInfo) {
       // User not found
       console.warn(`An invalid user requested information about his account, ${req.user!.email}`);
       const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal server error' };
@@ -37,9 +37,9 @@ router.get(`/`, auth, async (req, res, next) => {
       error: false,
       statusCode: 200,
       user: {
-        name: user.name,
-        email: user.email,
-        registrationDate: user.registrationDate.toISOString(),
+        name: userInfo.name,
+        email: userInfo.email,
+        registrationDate: userInfo.registrationDate.toISOString(),
       },
     };
     return res.status(body.statusCode).json(body);
@@ -61,10 +61,10 @@ router.delete(`/`, auth, async (req, res, next) => {
     console.info(`Deleting the account of the user with email '${req.user!.email}'`);
 
     // Delete all habits
-    await habits.getModel().deleteMany({ userEmail: req.user!.email }).exec();
+    await habit.getModel().deleteMany({ userEmail: req.user!.email }).exec();
 
     // Delete user
-    await users.getModel().deleteOne({ email: req.user!.email }).exec();
+    await user.getModel().deleteOne({ email: req.user!.email }).exec();
 
     // Construct and send response body
     const body: SuccessResponseBody = {
