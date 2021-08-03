@@ -1,5 +1,9 @@
 // Interfaces for the HTTP responses
 
+import { Habit } from '../models/Habit';
+import { HistoryEntryType } from '../models/HistoryEntry';
+
+
 /**
  * Represents a generic response
  */
@@ -42,6 +46,44 @@ export interface GetUserResponseBody extends SuccessResponseBody {
     email: string,
     registrationDate: string,
   },
+}
+
+export interface GetHabitsResponseBody extends SuccessResponseBody {
+  habits: {
+    id: string;
+    name: string;
+    creationDate: string;
+    category: string;
+    archived: boolean;
+  }[],
+}
+
+export interface AddHabitResponseBody extends SuccessResponseBody {
+  habit: {
+    id: string;
+    name: string;
+    creationDate: string;
+    category: string;
+    archived: boolean;
+  },
+}
+
+export interface GetHabitResponseBody extends SuccessResponseBody {
+  habit: {
+    id: string;
+    name: string;
+    creationDate: string;
+    category: string;
+    archived: boolean;
+  },
+}
+
+export interface GetHabitHistoryResponseBody extends SuccessResponseBody {
+  history: {
+    id: string,
+    date: string,
+    type: HistoryEntryType,
+  }[],
 }
 
 export interface GetCategoriesResponseBody extends SuccessResponseBody {
