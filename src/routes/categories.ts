@@ -9,7 +9,7 @@ import { ErrorResponseBody, GetCategoriesResponseBody, SuccessResponseBody } fro
 
 import auth from '../middlewares/auth'
 
-import * as habits from '../models/Habit';
+import * as habit from '../models/Habit';
 
 
 const router = express.Router();
@@ -23,7 +23,7 @@ router.get(`/`, auth, async (req, res, next) => {
 
   try {
     // Get distinct categories
-    const categories = (await habits.getModel().distinct('category').exec()) as string[];
+    const categories = (await habit.getModel().distinct('category').exec()) as string[];
 
     const body: GetCategoriesResponseBody = {
       error: false,
@@ -60,7 +60,7 @@ router.put(`/:category_name`, auth, async (req, res, next) => {
 
   try {
     // Update the category name of all the habits with the old category name
-    await habits.getModel().updateMany({ category: oldName }, { category: newName }).exec();
+    await habit.getModel().updateMany({ category: oldName }, { category: newName }).exec();
 
     const body: SuccessResponseBody = {
       error: false,
