@@ -7,13 +7,15 @@ import 'console-error';
 import * as user from './models/User';
 // import { } from './User';
 import * as habit from './models/Habit';
-import { Habit } from './models/Habit';
+import { Habit, HabitDocument } from './models/Habit';
 import * as historyEntry from './models/HistoryEntry';
 import { HistoryEntry, HistoryEntryType } from './models/HistoryEntry';
 
 
 // TODO maybe put db name and other inside .env
-const DB_URL = 'mongodb://habit-tracker-db:27017/habittracker';
+// const DB_URL = 'mongodb://habit-tracker-db:27017/habittracker';
+const DB_URL = 'mongodb://localhost:27017/habittracker';
+
 
 
 mongoose.connect(DB_URL, {
@@ -50,6 +52,7 @@ mongoose.connect(DB_URL, {
       creationDate: new Date(2021, 1, 2),
       category: 'Learning',
       archived: false,
+      history: [],
       userEmail: testUserDocument.email,
     },
     {
@@ -57,6 +60,7 @@ mongoose.connect(DB_URL, {
       creationDate: new Date(2021, 2, 5),
       category: 'Sport',
       archived: false,
+      history: [],
       userEmail: testUserDocument.email,
     },
     {
@@ -64,33 +68,38 @@ mongoose.connect(DB_URL, {
       creationDate: new Date(2021, 2, 7),
       category: 'Learning',
       archived: false,
+      history: [],
       userEmail: testUserDocument.email,
     },
   ];
-  return habit.getModel().insertMany(testUserHabits);
-}).then((habitDocuments) => {
+  const testUserHabitsDocuments = testUserHabits.map(el => {
+    const habitModel = habit.getModel();
+    return new habitModel(el);
+  });
+  return habit.getModel().insertMany(testUserHabitsDocuments);
+})
+.then((habitDocuments) => {
   console.info('Creating history entries for test user habits');
 
-  const historyEntries: HistoryEntry[] = [];
+  const promises: Promise<HabitDocument>[] = [];
   for (let habitDocument of habitDocuments) {
-    historyEntries.push({
-      habitId: habitDocument._id,
+    habitDocument.insertHistoryEntry({
       date: new Date(2021, 3, 1),
       type: HistoryEntryType.COMPLETED,
     });
-    historyEntries.push({
-      habitId: habitDocument._id,
+    habitDocument.insertHistoryEntry({
       date: new Date(2021, 3, 2),
       type: HistoryEntryType.SKIPPED,
     });
-    historyEntries.push({
-      habitId: habitDocument._id,
+    habitDocument.insertHistoryEntry({
       date: new Date(2021, 3, 3),
       type: HistoryEntryType.COMPLETED,
     });
+    promises.push(habitDocument.save());
   }
-  return historyEntry.getModel().insertMany(historyEntries);
-}).then(() => {
+  return Promise.all(promises);
+})
+.then(() => {
   return mongoose.connection.close();
 })
 .then(() => {
