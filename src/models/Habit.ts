@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 
 import { User, UserDocument, isUser } from './User';
 import { HistoryEntry, HistoryEntrySchema } from './HistoryEntry';
-import { HistoryEntryDocument } from './HistoryEntry_old';
 
 
 export interface Habit {
