@@ -5,14 +5,204 @@
 
 import express from 'express';
 
+import luxon, { DurationInput, DurationObjectUnits, DurationUnits } from 'luxon';
+import { DateTime } from 'luxon';
+import { GetGeneralStatsResponseBody, GetHabitStatsResponseBody } from '../httpTypes/responses';
+
 import auth from '../middlewares/auth'
 
 import * as habit from '../models/Habit';
-import { Habit } from '../models/Habit';
+import { Habit, HabitType } from '../models/Habit';
+import { HistoryEntry, HistoryEntryType } from '../models/HistoryEntry';
 
 
 const router = express.Router();
 export default router;
+
+
+interface StreakInfo {
+  startDate: DateTime,
+  length: number,         // number of completed and skipped (circa)
+  value: number,          // number of completed (circa)
+  type: HabitType,
+};
+
+
+function getStreakList(habit: Habit): StreakInfo[] {
+  const extractDate = (historyEntry: HistoryEntry): DateTime => DateTime.fromISO(historyEntry.date.toISOString()).toUTC();
+
+  const streakList: StreakInfo[] = [];
+
+  const history = habit.history;
+
+  const habitType: HabitType = habit.type;
+
+  let unit: keyof DurationObjectUnits;
+  let timeStep: DurationInput;
+  switch (habitType) {
+    case HabitType.DAILY:
+      unit = 'day';
+      timeStep = { days: 1 };
+      break;
+    case HabitType.WEEKLY:
+      unit = 'week';
+      timeStep = { weeks: 1 };
+      break;
+    case HabitType.MONTHLY:
+      unit = 'month';
+      timeStep = { months: 1 };
+      break;
+
+    default:
+      // Make sure all the HabitType cases are covered
+      const _exhaustiveCheck: never = habitType;
+      return _exhaustiveCheck;
+  }
+
+  const startDate = DateTime.fromISO(habit.creationDate.toISOString()).toUTC();
+  const todayDate = DateTime.now().toUTC();
+
+  let date = startDate.startOf(unit);
+  let i = 0;
+  while (date <= todayDate && i < history.length) {
+    let streakInfoStartDate = date;
+    let length = 0;
+    let value = 0;
+
+    let stillContiguous: boolean = true;
+    while (stillContiguous && i < history.length) {
+      const currentHistoryEntry = history[i];
+
+      // let stillHasSame: boolean = true;
+      let completed: boolean = false;
+      stillContiguous = extractDate(currentHistoryEntry).hasSame(date, unit);
+      if (stillContiguous) {
+        length++;
+        completed = currentHistoryEntry.type === HistoryEntryType.COMPLETED;
+        if (completed) {
+          value++;
+        }
+        i++;
+      }
+
+      date = date.plus(timeStep);
+    }
+
+    if (value > 0) {
+      const streakInfo: StreakInfo = {
+        startDate: streakInfoStartDate,
+        length: length,
+        value: value,         // TODO maybe rename to something more meaningful, for example 'score' or 'lengthWithoutSkip'
+        type: habitType,
+      };
+      streakList.push(streakInfo);
+    }
+  }
+
+  return streakList;
+}
+
+
+
+function getBestAndCurrentStreakLength(habit: Habit): { bestStreakLength: number, currentStreakLength: number } {
+
+  // Calculate streak list for this habit
+  const streakList: StreakInfo[] = getStreakList(habit);
+
+  // Before parsing the streak list, or if it is empty, the best and current streak length is 0
+  let bestStreakLength = 0;
+  let currentStreakLength = 0;
+  if (streakList.length > 0) {
+    // There is at least a streak
+
+    // Find the best (longest streak) and get its length (more precisely its 'value')
+    const bestStreak = streakList.reduce((prev, current) => (prev.value > current.value) ? prev : current, streakList[0]);
+    bestStreakLength = bestStreak.value;
+
+    // Calculate the value of the current streak
+
+    // Get the last streak
+    const lastStreak = streakList[streakList.length-1];
+
+    // Calculate habit type depending variables useful for the next computations
+    let unit: keyof DurationObjectUnits;
+    let streakDuration: DurationInput;
+    let timeStep: DurationInput;
+    switch (habit.type) {
+      case HabitType.DAILY:
+        unit = 'day';
+        streakDuration = { days: lastStreak.length };
+        timeStep = { days: 1 };
+        break;
+      case HabitType.WEEKLY:
+        unit = 'week';
+        streakDuration = { weeks: lastStreak.length };
+        timeStep = { weeks: 1 };
+        break;
+      case HabitType.MONTHLY:
+        unit = 'month';
+        streakDuration = { months: lastStreak.length };
+        timeStep = { months: 1 };
+        break;
+
+      default:
+        // Make sure all the HabitType cases are covered
+        const _exhaustiveCheck: never = habit.type;
+        return _exhaustiveCheck;
+    }
+
+
+    const streakEndDate = lastStreak.startDate.plus(streakDuration);    // calculate streak end date
+    const todayDate = DateTime.fromISO(new Date().toISOString());       // get current date
+    const previousPeriodDate = todayDate.minus(timeStep);               // calculate the previous day, week, or month, depending on habit type
+    // Check if the last streak in the list of streaks is still active
+    // It is considered active if it has been completed or skipped in the current or previous 'period'
+    // (day, week, or month, depending on habit type)
+    if (streakEndDate.hasSame(todayDate, unit) || streakEndDate.hasSame(previousPeriodDate, unit)) {
+      currentStreakLength = lastStreak.value;
+    }
+  }
+
+  return {
+    bestStreakLength: bestStreakLength,
+    currentStreakLength: currentStreakLength,
+  };
+}
+
+
+function numberOfTimesCompleted(habit: Habit): number {
+  const history = habit.history;
+  return history.reduce((acc, historyEntry) => acc + ((historyEntry.type === HistoryEntryType.COMPLETED) ? 1 : 0), 0);
+}
+
+
+function numberOfPeriodsSinceCreation(habit: Habit): number {
+  const creationDate = DateTime.fromISO(habit.creationDate.toISOString());
+  const today = DateTime.fromISO(new Date().toISOString());
+
+  let unit: DurationUnits;
+  switch (habit.type) {
+    case HabitType.DAILY:
+      unit = 'days';
+      break;
+    case HabitType.WEEKLY:
+      unit = 'weeks';
+      break;
+    case HabitType.MONTHLY:
+      unit = 'months';
+      break;
+
+    default:
+      // Make sure all the HabitType cases are covered
+      const _exhaustiveCheck: never = habit.type;
+      return _exhaustiveCheck;
+  }
+
+  const timeElapsedSinceCreation = today.diff(creationDate);
+  const periodsElapsedSinceCreation = Math.ceil(timeElapsedSinceCreation.as(unit));
+
+  return periodsElapsedSinceCreation;
+}
 
 
 /**
@@ -59,13 +249,41 @@ router.get(`/`, auth, async (req, res, next) => {
     .exec();
 
   // number of times all the habits has been completed
-  // TODO memorizzato in tabella stats
+  const habits = await habit.getModel().find({ userEmail: req.user!.email }).exec();
+  let completedCount = 0;
+  for (let habit of habits) {
+    completedCount += numberOfTimesCompleted(habit);
+  }
+
+  // percentage of times the habits has been completed
+  let totalPeriods = 0;
+  for (let habit of habits) {
+    totalPeriods += numberOfPeriodsSinceCreation(habit);
+  }
+  const completedPercentage = completedCount / totalPeriods;
+
+
+  // number of times all the habits has been completed
+  // TODO memorizzato in tabella stats (ma anche no)
   // TODO +1 ogni volta che completo un daily habit
   // TODO +1 ogni volta che completo un weekly habit
   // TODO +1 ogni volta che completo un monthly habit
   // TODO -1 ogni volta che viene eliminato/skippato uno dei precedenti
 
 
+
+  // Prepare and return the response body
+  const body: GetGeneralStatsResponseBody = {
+    error: false,
+    statusCode: 200,
+    stats: {
+      activeHabitCount: activeHabitCount,
+      archivedHabitCount: archivedHabitCount,
+      completedCount: completedCount,
+      completedPercentage: completedPercentage,
+    }
+  };
+  return res.status(body.statusCode).json(body);
 });
 
 
@@ -73,15 +291,38 @@ router.get(`/`, auth, async (req, res, next) => {
  * Returns the statistics about the given habit.
  */
 router.get(`/:habit_id`, auth, async (req, res, next) => {
+  try {
+    // Retrieve the habit
+    const requestedHabit = await habit.getModel()
+      .findOne({ _id: req.params.habit_id, userEmail: req.user!.email })
+      .exec();
 
-  function calculateCurrentStreak(habit: Habit) {
-    const creationDate = habit.creationDate;
-    const currentDate = new Date();
-    const history = habit.history;
-
-
-    for (let i = history.length; i >= 0; i--) {
-
+    if (!requestedHabit) {
+      console.warn('User asked the statistics about an unknown habit');
+      const errorBody = { error: true, statusCode: 404, errorMessage: 'Unknown habit' };
+      return next(errorBody);
     }
+
+    // Calculate stats
+    const { bestStreakLength, currentStreakLength } = getBestAndCurrentStreakLength(requestedHabit);
+    const completedCount = numberOfTimesCompleted(requestedHabit);
+
+    // Prepare and return the response body
+    const body: GetHabitStatsResponseBody = {
+      error: false,
+      statusCode: 200,
+      stats: {
+        bestStreak: bestStreakLength,
+        currentStreak: currentStreakLength,
+        completedCount: completedCount,
+      }
+    };
+    return res.status(body.statusCode).json(body);
+  }
+  catch (err) {
+    // Internal DB error happened
+    console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
+    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    return next(errorBody);
   }
 });
