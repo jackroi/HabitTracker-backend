@@ -25,7 +25,7 @@ export interface Habit {
   userEmail: string;
 }
 
-interface HabitDocument extends Habit, mongoose.Document {
+export interface HabitDocument extends Habit, mongoose.Document {
   insertHistoryEntry: (historyEntry: HistoryEntry) => void,
   deleteHistoryEntry: (date: Date) => void,
 }

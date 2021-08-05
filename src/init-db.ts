@@ -7,7 +7,7 @@ import 'console-error';
 import * as user from './models/User';
 // import { } from './User';
 import * as habit from './models/Habit';
-import { Habit, HabitDocument } from './models/Habit';
+import { Habit, HabitDocument, HabitType } from './models/Habit';
 import * as historyEntry from './models/HistoryEntry';
 import { HistoryEntry, HistoryEntryType } from './models/HistoryEntry';
 
@@ -51,6 +51,7 @@ mongoose.connect(DB_URL, {
       name: 'Study',
       creationDate: new Date(2021, 1, 2),
       category: 'Learning',
+      type: HabitType.DAILY,
       archived: false,
       history: [],
       userEmail: testUserDocument.email,
@@ -59,6 +60,7 @@ mongoose.connect(DB_URL, {
       name: 'Run',
       creationDate: new Date(2021, 2, 5),
       category: 'Sport',
+      type: HabitType.DAILY,
       archived: false,
       history: [],
       userEmail: testUserDocument.email,
@@ -67,6 +69,7 @@ mongoose.connect(DB_URL, {
       name: 'Read',
       creationDate: new Date(2021, 2, 7),
       category: 'Learning',
+      type: HabitType.DAILY,
       archived: false,
       history: [],
       userEmail: testUserDocument.email,
