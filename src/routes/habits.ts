@@ -86,6 +86,7 @@ router.get(`/`, auth, async (req, res, next) => {
       name: habit.name,
       creationDate: habit.creationDate.toISOString(),
       category: habit.category,
+      type: habit.type,
       archived: habit.archived,
     }));
 
@@ -124,6 +125,7 @@ router.post(`/`, auth, async (req, res, next) => {
     const newHabitData = {
       name: req.body.name,
       category: req.body.category,
+      type: req.body.type,
       email: req.user!.email,
     };
 
@@ -133,6 +135,7 @@ router.post(`/`, auth, async (req, res, next) => {
       name: newHabit.name,
       creationDate: newHabit.creationDate.toISOString(),
       category: newHabit.category,
+      type: newHabit.type,
       archived: newHabit.archived,
     };
 
@@ -162,7 +165,7 @@ router.get(`/:habit_id`, auth, async (req, res, next) => {
     const requestedHabit = await habit.getModel().findOne({
       _id: req.params.habit_id,         // must have the given id
       userEmail: req.user!.email,       // must be of the logged in user
-    });
+    }).exec();
 
     if (!requestedHabit) {
       console.warn('User asked details about an unknown habit');
@@ -176,6 +179,7 @@ router.get(`/:habit_id`, auth, async (req, res, next) => {
       name: requestedHabit.name,
       creationDate: requestedHabit.creationDate.toISOString(),
       category: requestedHabit.category,
+      type: requestedHabit.type,
       archived: requestedHabit.archived,
     };
 

@@ -1,5 +1,6 @@
 // Interfaces for the HTTP requests
 
+import { HabitType } from "../models/Habit";
 import { HistoryEntryType } from "../models/HistoryEntry";
 
 export interface RequestBody {
@@ -25,6 +26,7 @@ export function isRegistrationRequestBody(arg: any): arg is RegistrationRequestB
 export interface AddHabitRequestBody extends RequestBody {
   name: string,
   category: string,
+  type: HabitType,
 }
 
 // Type guard function
@@ -33,7 +35,10 @@ export function isAddHabitRequestBody(arg: any): arg is AddHabitRequestBody {
     && arg.name           // It can't be the empty string
     && typeof (arg.name) === 'string'
     && arg.category       // It can't be the empty string
-    && typeof (arg.category) === 'string';
+    && typeof (arg.category) === 'string'
+    && arg.type           // It can't be the empty string
+    && typeof (arg.type) === 'string'
+    && (arg.type === HabitType.DAILY || arg.type === HabitType.WEEKLY || arg.type === HabitType.MONTHLY);
 }
 
 export interface UpdateHabitRequestBody extends RequestBody {
@@ -74,7 +79,7 @@ export function isAddHistoryEntryRequestBody(arg: any): arg is AddHistoryEntryRe
     && typeof (arg.date) === 'string'
     && arg.type           // It can't be the empty string
     && typeof (arg.type) === 'string'
-    && (arg.type === HistoryEntryType.COMPLETED || HistoryEntryType.SKIPPED);
+    && (arg.type === HistoryEntryType.COMPLETED || arg.type === HistoryEntryType.SKIPPED);
 }
 
 export interface UpdateHistoryEntryRequestBody extends RequestBody {

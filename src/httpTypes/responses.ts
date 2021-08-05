@@ -1,6 +1,6 @@
 // Interfaces for the HTTP responses
 
-import { Habit } from '../models/Habit';
+import { Habit, HabitType } from '../models/Habit';
 import { HistoryEntryType } from '../models/HistoryEntry';
 
 
@@ -54,6 +54,7 @@ export interface GetHabitsResponseBody extends SuccessResponseBody {
     name: string;
     creationDate: string;
     category: string;
+    type: HabitType;
     archived: boolean;
   }[],
 }
@@ -64,6 +65,7 @@ export interface AddHabitResponseBody extends SuccessResponseBody {
     name: string;
     creationDate: string;
     category: string;
+    type: HabitType;
     archived: boolean;
   },
 }
@@ -74,6 +76,7 @@ export interface GetHabitResponseBody extends SuccessResponseBody {
     name: string;
     creationDate: string;
     category: string;
+    type: HabitType;
     archived: boolean;
   },
 }
@@ -88,4 +91,21 @@ export interface GetHabitHistoryResponseBody extends SuccessResponseBody {
 
 export interface GetCategoriesResponseBody extends SuccessResponseBody {
   categories: string[],
+}
+
+export interface GetGeneralStatsResponseBody extends SuccessResponseBody {
+  stats: {
+    activeHabitCount: number,
+    archivedHabitCount: number,
+    completedCount: number,
+    completedPercentage: number,
+  }
+}
+
+export interface GetHabitStatsResponseBody extends SuccessResponseBody {
+  stats: {
+    bestStreak: number,
+    currentStreak: number,
+    completedCount: number,
+  }
 }
