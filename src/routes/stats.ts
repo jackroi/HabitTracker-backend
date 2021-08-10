@@ -238,6 +238,8 @@ function numberOfPeriodsSinceCreation(habit: Habit): number {
  */
 router.get(`/`, auth, async (req, res, next) => {
 
+  // TODO capire cosa fare con habit archiviati (forse non vanno contati ?)
+
   // number of active habits
   const activeHabitCount = await habit.getModel()
     .countDocuments({ userEmail: req.user!.email, archived: false })
@@ -260,7 +262,7 @@ router.get(`/`, auth, async (req, res, next) => {
   for (let habit of habits) {
     totalPeriods += numberOfPeriodsSinceCreation(habit);
   }
-  const completedPercentage = completedCount / totalPeriods;
+  const completedPercentage = completedCount / totalPeriods * 100;
 
 
   // number of times all the habits has been completed
@@ -307,6 +309,9 @@ router.get(`/:habit_id`, auth, async (req, res, next) => {
     const { bestStreakLength, currentStreakLength } = getBestAndCurrentStreakLength(requestedHabit);
     const completedCount = numberOfTimesCompleted(requestedHabit);
 
+    // percentage of times the habit has been completed
+    const completedPercentage = completedCount / numberOfPeriodsSinceCreation(requestedHabit) * 100;
+
     // Prepare and return the response body
     const body: GetHabitStatsResponseBody = {
       error: false,
@@ -315,6 +320,7 @@ router.get(`/:habit_id`, auth, async (req, res, next) => {
         bestStreak: bestStreakLength,
         currentStreak: currentStreakLength,
         completedCount: completedCount,
+        completedPercentage: completedPercentage,
       }
     };
     return res.status(body.statusCode).json(body);

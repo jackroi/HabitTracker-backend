@@ -119,5 +119,6 @@ export interface GetHabitStatsResponseBody extends SuccessResponseBody {
     bestStreak: number,
     currentStreak: number,
     completedCount: number,
+    completedPercentage: number,
   }
 }
