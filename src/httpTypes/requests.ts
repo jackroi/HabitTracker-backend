@@ -53,7 +53,7 @@ export function isUpdateHabitRequestBody(arg: any): arg is UpdateHabitRequestBod
   return arg
     && (!arg.name || typeof (arg.name) === 'string')
     && (!arg.category || typeof (arg.category) === 'string')
-    && ((arg.archived !== undefined && arg.archived !== null) || typeof (arg.archived) === 'boolean');
+    && (!(arg.archived !== undefined && arg.archived !== null) || typeof (arg.archived) === 'boolean');
 }
 
 export interface UpdateCategoryNameRequestBody extends RequestBody {
