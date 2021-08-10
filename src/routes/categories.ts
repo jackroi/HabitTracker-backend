@@ -23,7 +23,9 @@ router.get(`/`, auth, async (req, res, next) => {
 
   try {
     // Get distinct categories
-    const categories = (await habit.getModel().distinct('category').exec()) as string[];
+    const categories = (await habit.getModel()
+      .distinct('category', { userEmail: req.user!.email })
+      .exec()) as string[];
 
     const body: GetCategoriesResponseBody = {
       error: false,
