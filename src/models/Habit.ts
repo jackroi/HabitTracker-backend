@@ -12,6 +12,14 @@ export enum HabitType {
   MONTHLY = 'MONTHLY',
 }
 
+
+export enum HabitState {
+  COMPLETED = 'COMPLETED',
+  SKIPPED = 'SKIPPED',
+  NOT_COMPLETED = 'NOT_COMPLETED',
+}
+
+
 export interface Habit {
   name: string;
   creationDate: Date;

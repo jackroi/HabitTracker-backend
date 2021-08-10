@@ -18,18 +18,42 @@ import {
   ErrorResponseBody,
   GetHabitHistoryResponseBody,
   GetHabitResponseBody,
+  GetHabitsForDateResponseBody,
   GetHabitsResponseBody,
   SuccessResponseBody
 } from '../httpTypes/responses';
 
 
 import * as habit from '../models/Habit';
-import { Habit } from '../models/Habit';
-import { HistoryEntry, HistoryEntryDocument } from '../models/HistoryEntry';
+import { Habit, HabitState, HabitType } from '../models/Habit';
+import { HistoryEntry, HistoryEntryDocument, HistoryEntryType } from '../models/HistoryEntry';
+import { DateTime, DurationObjectUnits, DurationUnits } from 'luxon';
 
 
 const router = express.Router();
 export default router;
+
+function getUnit(type: HabitType): keyof DurationObjectUnits {
+  let unit: keyof DurationObjectUnits;
+  switch (type) {
+    case HabitType.DAILY:
+      unit = 'day';
+      break;
+    case HabitType.WEEKLY:
+      unit = 'week';
+      break;
+    case HabitType.MONTHLY:
+      unit = 'month';
+      break;
+
+    default:
+      // Make sure all the HabitType cases are covered
+      const _exhaustiveCheck: never = type;
+      return _exhaustiveCheck;
+  }
+
+  return unit;
+}
 
 
 /**
@@ -40,9 +64,10 @@ export default router;
  * - category: The category of habits to return. By default returns all the habits. Default: `` (all).
  * - skip: The number of habits to skip. Default: 0.
  * - limit: The maximum number of habits to return. Default: 50.
+ * - date: The date for which to return the habits, in the format YYYY-MM-DD. Default: `` (all).
  */
 router.get(`/`, auth, async (req, res, next) => {
-  let { filter, category, skip, limit } = req.query;
+  let { filter, category, skip, limit, date } = req.query;
 
   // filter for mongodb query
   const queryFilter: { userEmail: string, archived?: boolean, category?: string } = {
@@ -80,23 +105,78 @@ router.get(`/`, auth, async (req, res, next) => {
       .skip(skipNumber)
       .limit(limitNumber);
 
-    // Transform list of habits in the expected format
-    const returnedHabits = habits.map((habit) => ({
-      id: habit._id as string,
-      name: habit.name,
-      creationDate: habit.creationDate.toISOString(),
-      category: habit.category,
-      type: habit.type,
-      archived: habit.archived,
-    }));
+    // date param validation
+    if (date && typeof(date) === 'string') {
+      // TODO maybe regex to check date format
+      // Get date
+      const givenDate = DateTime.fromISO(new Date(date).toISOString()).toUTC().startOf('day');
 
-    const body: GetHabitsResponseBody = {
-      error: false,
-      statusCode: 200,
-      habits: returnedHabits,
-    };
+      // Transform list of habits in the expected format
+      const returnedHabits = habits
+        .filter((habit) => {
+          // Filter out all the habits that not existed in the given date
+          // TODO valutare se voglio davvero non mostrare habit che in givenDate non erano ancora stati creati
+          // return true;
+          return DateTime.fromISO(habit.creationDate.toISOString()).startOf('day').toUTC() <= givenDate;
+        })
+        .map((habit) => {
+          const historyEntry = habit.history.find((historyEntry) => {
+            return DateTime.fromISO(historyEntry.date.toISOString()).hasSame(givenDate, getUnit(habit.type));
+          });
 
-    return res.status(body.statusCode).json(body);
+          let habitState: HabitState;
+          switch (historyEntry?.type) {
+            case HistoryEntryType.COMPLETED:
+              habitState = HabitState.COMPLETED;
+              break;
+
+            case HistoryEntryType.SKIPPED:
+              habitState = HabitState.SKIPPED;
+              break;
+
+            case undefined:
+              habitState = HabitState.NOT_COMPLETED;
+              break;
+          }
+
+          return {
+            id: habit._id as string,
+            name: habit.name,
+            creationDate: habit.creationDate.toISOString(),
+            category: habit.category,
+            type: habit.type,
+            state: habitState,
+            archived: habit.archived,
+          };
+        });
+
+      const body: GetHabitsForDateResponseBody = {
+        error: false,
+        statusCode: 200,
+        habits: returnedHabits,
+      };
+      console.info(body);
+      return res.status(body.statusCode).json(body);
+    }
+    else {
+      // Transform list of habits in the expected format
+      const returnedHabits = habits.map((habit) => ({
+        id: habit._id as string,
+        name: habit.name,
+        creationDate: habit.creationDate.toISOString(),
+        category: habit.category,
+        type: habit.type,
+        archived: habit.archived,
+      }));
+
+      const body: GetHabitsResponseBody = {
+        error: false,
+        statusCode: 200,
+        habits: returnedHabits,
+      };
+      return res.status(body.statusCode).json(body);
+    }
+
   }
   catch (err) {
     // Internal DB error happened
@@ -130,6 +210,7 @@ router.post(`/`, auth, async (req, res, next) => {
     };
 
     const newHabit = await habit.newHabit(newHabitData).save();
+    console.info('New habit created', newHabit);
     const returnedHabit = {
       id: newHabit._id as string,
       name: newHabit.name,
