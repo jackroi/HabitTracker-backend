@@ -158,7 +158,6 @@ router.get(`/`, auth, async (req, res, next) => {
         statusCode: 200,
         habits: returnedHabits,
       };
-      console.info(body);
       return res.status(body.statusCode).json(body);
     }
     else {
@@ -226,6 +225,7 @@ router.post(`/`, auth, async (req, res, next) => {
     const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
     for (let socket of sockets) {
       socket.emit('habitCreated', returnedHabit.id);
+      console.info('emit', 'habitCreated');
     }
 
     const body: AddHabitResponseBody = {
@@ -329,6 +329,7 @@ router.put(`/:habit_id`, auth, async (req, res, next) => {
       const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
       for (let socket of sockets) {
         socket.emit('habitUpdated', req.params.habit_id);
+        console.info('emit', 'habitUpdated');
       }
 
       // send success response
@@ -367,6 +368,7 @@ router.delete(`/:habit_id`, auth, async (req, res, next) => {
       const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
       for (let socket of sockets) {
         socket.emit('habitDeleted', req.params.habit_id);
+        console.info('emit', 'habitDeleted');
       }
 
       // send success response
@@ -472,6 +474,7 @@ router.post(`/:habit_id/history`, auth, async (req, res, next) => {
     const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
     for (let socket of sockets) {
       socket.emit('habitHistoryUpdated', req.params.habit_id);
+      console.info('emit', 'habitHistoryUpdated');
     }
 
     const body: SuccessResponseBody = {
@@ -530,6 +533,7 @@ router.put(`/:habit_id/history/:date`, auth, async (req, res, next) => {
     const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
     for (let socket of sockets) {
       socket.emit('habitHistoryUpdated', req.params.habit_id);
+      console.info('emit', 'habitHistoryUpdated');
     }
 
     const body: SuccessResponseBody = {
@@ -572,6 +576,7 @@ router.delete(`/:habit_id/history/:date`, auth, async (req, res, next) => {
     const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
     for (let socket of sockets) {
       socket.emit('habitHistoryUpdated', req.params.habit_id);
+      console.info('emit', 'habitHistoryUpdated');
     }
 
     const body: SuccessResponseBody = {
