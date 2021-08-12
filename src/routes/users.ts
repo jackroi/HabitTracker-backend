@@ -10,11 +10,13 @@ import auth from '../middlewares/auth'
 
 import * as user from '../models/User';
 import * as habit from '../models/Habit';
+import { OnlineUserManager } from '../OnlineUserManager';
 
 
 const router = express.Router();
 export default router;
 
+const onlineUserManager = OnlineUserManager.getInstance();
 
 
 /**
@@ -65,6 +67,11 @@ router.delete(`/`, auth, async (req, res, next) => {
 
     // Delete user
     await user.getModel().deleteOne({ email: req.user!.email }).exec();
+
+    const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
+    for (let socket of sockets) {
+      socket.emit('accountDeleted');
+    }
 
     // Construct and send response body
     const body: SuccessResponseBody = {

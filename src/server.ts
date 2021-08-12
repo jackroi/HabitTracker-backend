@@ -49,6 +49,9 @@ import habitsRouter from './routes/habits';
 import statsRouter from './routes/stats';
 import categoriesRouter from './routes/categories';
 
+import { getSocketIO, initializeSocketIO } from './initializeSocketIO';
+import registerOnlineUserHandlers from './socketHandlers/onlineUserHandlers';
+
 import {
   RegistrationRequestBody,
   isRegistrationRequestBody,
@@ -343,6 +346,19 @@ mongoose.connect(`mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`, {
 })
 .then(() => {
   const server = http.createServer(app);
+
+  // Initialize socketIO
+  initializeSocketIO(server);
+  // socketIO instance
+  const io = getSocketIO();
+
+  // For each socket that connects to the Server, register all the socketIO events.
+  io.on('connection', (socket) => {
+    console.info('Socket.io client connected');
+
+    registerOnlineUserHandlers(io, socket);
+  });
+
   server.listen(SERVER_PORT, () => console.info(`HTTP Server started on port ${SERVER_PORT}`));
 })
 .catch((err) => {

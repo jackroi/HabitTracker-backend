@@ -28,10 +28,13 @@ import * as habit from '../models/Habit';
 import { Habit, HabitState, HabitType } from '../models/Habit';
 import { HistoryEntry, HistoryEntryDocument, HistoryEntryType } from '../models/HistoryEntry';
 import { DateTime, DurationObjectUnits, DurationUnits } from 'luxon';
+import { OnlineUserManager } from '../OnlineUserManager';
 
 
 const router = express.Router();
 export default router;
+
+const onlineUserManager = OnlineUserManager.getInstance();
 
 function getUnit(type: HabitType): keyof DurationObjectUnits {
   let unit: keyof DurationObjectUnits;
@@ -220,6 +223,11 @@ router.post(`/`, auth, async (req, res, next) => {
       archived: newHabit.archived,
     };
 
+    const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
+    for (let socket of sockets) {
+      socket.emit('habitCreated', returnedHabit.id);
+    }
+
     const body: AddHabitResponseBody = {
       error: false,
       statusCode: 200,
@@ -318,6 +326,11 @@ router.put(`/:habit_id`, auth, async (req, res, next) => {
       return next(errorBody);
     }
     else {                                            // habit modified succesfully
+      const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
+      for (let socket of sockets) {
+        socket.emit('habitUpdated', req.params.habit_id);
+      }
+
       // send success response
       const body: SuccessResponseBody = {
         error: false,
@@ -351,6 +364,11 @@ router.delete(`/:habit_id`, auth, async (req, res, next) => {
       return next(errorBody);
     }
     else {
+      const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
+      for (let socket of sockets) {
+        socket.emit('habitDeleted', req.params.habit_id);
+      }
+
       // send success response
       const body: SuccessResponseBody = {
         error: false,
@@ -451,6 +469,11 @@ router.post(`/:habit_id/history`, auth, async (req, res, next) => {
     });
     await requestedHabit.save();
 
+    const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
+    for (let socket of sockets) {
+      socket.emit('habitHistoryUpdated', req.params.habit_id);
+    }
+
     const body: SuccessResponseBody = {
       error: false,
       statusCode: 200,
@@ -504,6 +527,11 @@ router.put(`/:habit_id/history/:date`, auth, async (req, res, next) => {
     });
     await requestedHabit.save();
 
+    const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
+    for (let socket of sockets) {
+      socket.emit('habitHistoryUpdated', req.params.habit_id);
+    }
+
     const body: SuccessResponseBody = {
       error: false,
       statusCode: 200,
@@ -540,6 +568,11 @@ router.delete(`/:habit_id/history/:date`, auth, async (req, res, next) => {
     // update history entry
     requestedHabit.deleteHistoryEntry(new Date(req.params.date));
     await requestedHabit.save();
+
+    const sockets = onlineUserManager.getSocketsFromUser(req.user!.email);
+    for (let socket of sockets) {
+      socket.emit('habitHistoryUpdated', req.params.habit_id);
+    }
 
     const body: SuccessResponseBody = {
       error: false,
