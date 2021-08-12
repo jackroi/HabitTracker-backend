@@ -41,6 +41,19 @@ export default function (io: Server<ClientEvents, ServerEvents>, socket: Socket<
   });
 
   // Handler of the socket diconnection
+  socket.on('offline', async () => {
+    console.info('Socket event: "offline"');
+
+    const email = onlineUserHandler.getUserFromSocket(socket);
+    if (!email) {          // Not registered socket, probably the user is offline
+      return;
+    }
+
+    // Remove the disconnected socket
+    onlineUserHandler.removeUserSocket(socket);
+  });
+
+  // Handler of the socket diconnection
   socket.on('disconnect', async () => {
     console.info('Socket event: "disconnect"');
 
