@@ -152,8 +152,8 @@ function getBestAndCurrentStreakLength(habit: Habit): { bestStreakLength: number
     }
 
 
-    const streakEndDate = lastStreak.startDate.plus(streakDuration);    // calculate streak end date
-    const todayDate = DateTime.fromISO(new Date().toISOString());       // get current date
+    const streakEndDate = lastStreak.startDate.plus(streakDuration).minus({ days: 1 });     // calculate streak end date
+    const todayDate = DateTime.now().startOf('day');                    // get current date
     const previousPeriodDate = todayDate.minus(timeStep);               // calculate the previous day, week, or month, depending on habit type
     // Check if the last streak in the list of streaks is still active
     // It is considered active if it has been completed or skipped in the current or previous 'period'
