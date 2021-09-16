@@ -1,3 +1,23 @@
+// load .env into process.env
+import dotenv = require('dotenv');
+const result = dotenv.config()
+
+if (result.error) {
+  console.error('Unable to load \'.env\' file. Please provide one to store the JWT secret key');
+  process.exit(-1);
+}
+if (!process.env.DB_HOST
+  || !process.env.DB_PORT
+  || !process.env.DB_NAME) {
+  console.error('\'.env\' file loaded but doesn\'t contain some required key-value pairs');
+  process.exit(-1);
+}
+if (!process.env.npm_package_version) {
+  console.error('Missing environment variabile npm_package_version');
+  process.exit(-1);
+}
+
+
 import mongoose from 'mongoose';
 // add colorization to logs
 import 'console-info';
@@ -12,9 +32,14 @@ import * as historyEntry from './models/HistoryEntry';
 import { HistoryEntry, HistoryEntryType } from './models/HistoryEntry';
 
 
-// TODO maybe put db name and other inside .env
-// const DB_URL = 'mongodb://habit-tracker-db:27017/habittracker';
-const DB_URL = 'mongodb://localhost:27017/habittracker';
+const {
+  DB_HOST,
+  DB_PORT,
+  DB_NAME,
+} = process.env;
+
+
+const DB_URL = `mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`;
 
 
 
