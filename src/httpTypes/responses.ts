@@ -27,6 +27,35 @@ export interface ErrorResponseBody extends ResponseBody {
   errorMessage: string,
 }
 
+export class BadRequestErrorResponseBody implements ErrorResponseBody {
+  private static readonly HTTP_BAD_REQUEST: number = 400;
+
+  public error: true;
+  public statusCode: number;
+  public errorMessage: string;
+
+  constructor (errorMessage: string) {
+    this.error = true;
+    this.statusCode = BadRequestErrorResponseBody.HTTP_BAD_REQUEST;
+    this.errorMessage = errorMessage;
+  }
+}
+
+export class InternalDbErrorResponseBody implements ErrorResponseBody {
+  private static readonly HTTP_INTERNAL_SERVER_ERROR: number = 500;
+
+  public error: true;
+  public statusCode: number;
+  public errorMessage: string;
+
+  constructor () {
+    this.error = true;
+    this.statusCode = InternalDbErrorResponseBody.HTTP_INTERNAL_SERVER_ERROR;
+    this.errorMessage = 'Internal DB error';
+  }
+}
+
+
 export interface RootResponseBody extends SuccessResponseBody {
   apiVersion: string,
   endpoints: string[],
