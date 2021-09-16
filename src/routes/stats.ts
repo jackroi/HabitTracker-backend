@@ -7,7 +7,7 @@ import express from 'express';
 
 import luxon, { DurationInput, DurationObjectUnits, DurationUnits } from 'luxon';
 import { DateTime } from 'luxon';
-import { GetGeneralStatsResponseBody, GetHabitStatsResponseBody } from '../httpTypes/responses';
+import { ErrorResponseBody, GetGeneralStatsResponseBody, GetHabitStatsResponseBody, InternalDbErrorResponseBody } from '../httpTypes/responses';
 
 import auth from '../middlewares/auth'
 
@@ -237,55 +237,50 @@ function numberOfPeriodsSinceCreation(habit: Habit): number {
  * Returns the general statistics about the logged in user.
  */
 router.get(`/`, auth, async (req, res, next) => {
+  try {
+    // number of active habits
+    const activeHabitCount = await habit.getModel()
+      .countDocuments({ userEmail: req.user!.email, archived: false })
+      .exec();
 
-  // TODO capire cosa fare con habit archiviati (forse non vanno contati ?)
+    // number of archived habits
+    const archivedHabitCount = await habit.getModel()
+      .countDocuments({ userEmail: req.user!.email, archived: true })
+      .exec();
 
-  // number of active habits
-  const activeHabitCount = await habit.getModel()
-    .countDocuments({ userEmail: req.user!.email, archived: false })
-    .exec();
-
-  // number of archived habits
-  const archivedHabitCount = await habit.getModel()
-    .countDocuments({ userEmail: req.user!.email, archived: true })
-    .exec();
-
-  // number of times all the habits has been completed
-  const habits = await habit.getModel().find({ userEmail: req.user!.email }).exec();
-  let completedCount = 0;
-  for (let habit of habits) {
-    completedCount += numberOfTimesCompleted(habit);
-  }
-
-  // percentage of times the habits has been completed
-  let totalPeriods = 0;
-  for (let habit of habits) {
-    totalPeriods += numberOfPeriodsSinceCreation(habit);
-  }
-  const completedPercentage = completedCount / totalPeriods * 100;
-
-
-  // number of times all the habits has been completed
-  // TODO memorizzato in tabella stats (ma anche no)
-  // TODO +1 ogni volta che completo un daily habit
-  // TODO +1 ogni volta che completo un weekly habit
-  // TODO +1 ogni volta che completo un monthly habit
-  // TODO -1 ogni volta che viene eliminato/skippato uno dei precedenti
-
-
-
-  // Prepare and return the response body
-  const body: GetGeneralStatsResponseBody = {
-    error: false,
-    statusCode: 200,
-    stats: {
-      activeHabitCount: activeHabitCount,
-      archivedHabitCount: archivedHabitCount,
-      completedCount: completedCount,
-      completedPercentage: completedPercentage,
+    // number of times all the active habits has been completed
+    const habits = await habit.getModel().find({ userEmail: req.user!.email, archived: false }).exec();
+    let completedCount = 0;
+    for (let habit of habits) {
+      completedCount += numberOfTimesCompleted(habit);
     }
-  };
-  return res.status(body.statusCode).json(body);
+
+    // percentage of times the habits has been completed
+    let totalPeriods = 0;
+    for (let habit of habits) {
+      totalPeriods += numberOfPeriodsSinceCreation(habit);
+    }
+    const completedPercentage = completedCount / totalPeriods * 100;
+
+    // Prepare and return the response body
+    const body: GetGeneralStatsResponseBody = {
+      error: false,
+      statusCode: 200,
+      stats: {
+        activeHabitCount: activeHabitCount,
+        archivedHabitCount: archivedHabitCount,
+        completedCount: completedCount,
+        completedPercentage: completedPercentage,
+      }
+    };
+    return res.status(body.statusCode).json(body);
+  }
+  catch (err) {
+    // Internal DB error happened
+    console.error('Someting went wrong while calculating general statistics', err);
+    const errorBody: ErrorResponseBody = new InternalDbErrorResponseBody();
+    return next(errorBody);
+  }
 });
 
 
@@ -327,8 +322,8 @@ router.get(`/:habit_id`, auth, async (req, res, next) => {
   }
   catch (err) {
     // Internal DB error happened
-    console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    console.error('Someting went wrong while calculating statistics for the habit', err);
+    const errorBody: ErrorResponseBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
