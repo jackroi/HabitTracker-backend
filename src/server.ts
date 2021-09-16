@@ -90,24 +90,14 @@ const app = express();
 
 
 // Configure HTTP basic authentication strategy
-passport.use(new passportHTTP.BasicStrategy((username, password, done) => {
+passport.use(new passportHTTP.BasicStrategy(async (username, password, done) => {
   // delegate function we provide to passport middleware
   // to verify user credentials
 
   console.info(`New login attempt from ${username}`);
 
-  // TODO eventualmente trasformare con await/async/catch o then/catch
-
-  user.getModel().findOne({ email: username }, null, null, (err, userDocument) => {
-    if (err) {
-      console.error('Error occurred querying the database while logging in');
-      console.error(JSON.stringify(err, null, 2));
-      return done({
-        statusCode: 500,
-        error: true,
-        errorMessage: 'Internal server error',
-      });
-    }
+  try {
+    const userDocument = await user.getModel().findOne({ email: username }).exec();
 
     if (!userDocument) {
       console.info('Invalid email (not registered)');
@@ -129,7 +119,17 @@ passport.use(new passportHTTP.BasicStrategy((username, password, done) => {
 
     console.info(`${username} logged in succesfully`);
     return done(null, userDocument);
-  });
+  }
+  catch (err) {
+    console.error('Error occurred querying the database while logging in');
+    console.error(JSON.stringify(err, null, 2));
+    return done({
+      statusCode: 500,
+      error: true,
+      errorMessage: 'Internal server error',
+    });
+  }
+
 }));
 
 
