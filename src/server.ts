@@ -62,7 +62,10 @@ import {
   ErrorResponseBody,
   LoginResponseBody,
   RegistrationResponseBody,
+  BadRequestErrorResponseBody,
+  InternalDbErrorResponseBody,
 } from './httpTypes/responses';
+import { validateEmail } from './utils/utils';
 
 declare global {
   namespace Express {
@@ -184,11 +187,9 @@ app.post(`/v${version}/register`, async (req, res, next) => {
 
   if (!isRegistrationRequestBody(req.body)) {
     console.warn(`Wrong registration body content\n${JSON.stringify(req.body, null, 2)}`);
-    const errorBody: ErrorResponseBody = {
-      error: true,
-      statusCode: 400,
-      errorMessage: 'Wrong registration body content',
-    };
+    const errorBody: BadRequestErrorResponseBody = new BadRequestErrorResponseBody(
+      'Wrong registration body content'
+    );
     return next(errorBody);
   }
 
@@ -200,57 +201,53 @@ app.post(`/v${version}/register`, async (req, res, next) => {
   };
 
   // input validation
-  let error: ErrorResponseBody | null = null;
-  // TODO costruttore per 400 bad request
+  let error: BadRequestErrorResponseBody | null = null;
   if (typeof(newUser.name) !== 'string' || newUser.name.trim().length === 0) {
-    error = {
-      statusCode: 400,
-      error: true,
-      errorMessage: 'Bad request: invalid field "name"',
-    };
-  } else if (typeof(newUser.email) !== 'string' || newUser.email.trim().length === 0) {   // TODO validate email with regex
-    error = {
-      statusCode: 400,
-      error: true,
-      errorMessage: 'Bad request: invalid field "email"',
-    };
-  } else if (typeof(newUser.password) !== 'string' || newUser.password.trim().length === 0) {
-    // TODO validate password with regex ???
-    error = {
-      statusCode: 400,
-      error: true,
-      errorMessage: 'Bad request: invalid field "password"',
-    };
-  } else if ((await user.getModel().findOne({ email: newUser.email }).exec())) {
-    error = {
-      statusCode: 409,
-      error: true,
-      errorMessage: 'This email is already registered',
-    };
+    error = new BadRequestErrorResponseBody('Bad request: invalid field "name"');
+  }
+  else if (typeof(newUser.email) !== 'string'
+      || newUser.email.trim().length === 0
+      || !validateEmail(newUser.email.trim())) {
+    error = new BadRequestErrorResponseBody('Bad request: invalid field "email"');
+  }
+  else if (typeof(newUser.password) !== 'string' || newUser.password.trim().length === 0) {
+    error = new BadRequestErrorResponseBody('Bad request: invalid field "password"');
+  }
+  else if ((await user.getModel().findOne({ email: newUser.email.trim() }).exec())) {
+    error = new BadRequestErrorResponseBody('This email is already registered');
   }
 
   if (error) {
     return next(error);
   }
 
-  // TODO forse gestire errore in caso di inserimento email esistente
-  await user.newUser(newUser).save();
+  newUser.name = newUser.name.trim();
+  newUser.email = newUser.email.trim();
 
-  console.info(`New user created: ${newUser.email}`);
+  try {
+    await user.newUser(newUser).save();
 
-  // generate a JWT with the useful user data and return it as response
-  const jwtToken = generateJwtToken({
-    name: newUser.name,
-    email: newUser.email,
-  });
+    console.info(`New user created: ${newUser.email}`);
 
-  const body: RegistrationResponseBody = {
-    error: false,
-    statusCode: 200,
-    token: jwtToken,
-  };
+    // generate a JWT with the useful user data and return it as response
+    const jwtToken = generateJwtToken({
+      name: newUser.name,
+      email: newUser.email,
+    });
 
-  return res.status(body.statusCode).json(body);
+    const body: RegistrationResponseBody = {
+      error: false,
+      statusCode: 200,
+      token: jwtToken,
+    };
+
+    return res.status(body.statusCode).json(body);
+  }
+  catch (err) {
+    console.error(`Failed to save new user into database\n${JSON.stringify(err, null, 2)}`);
+    const errorBody: InternalDbErrorResponseBody = new InternalDbErrorResponseBody();
+    return next(errorBody);
+  }
 });
 
 
@@ -264,7 +261,7 @@ app.get(`/v${version}/login`, passport.authenticate('basic', { session: false })
   // verify that user has really been injected into req
   if (!req.user) {
     console.error('Internal login error: req.user is undefined');
-    let errorBody: ErrorResponseBody = {      // TODO magari fare una classe apposta che crei questo errore
+    let errorBody: ErrorResponseBody = {
       statusCode: 500,
       error: true,
       errorMessage: 'Internal server error',
