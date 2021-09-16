@@ -4,12 +4,8 @@ import jsonwebtoken = require('jsonwebtoken');    // JWT generation
 import ClientEvents from './eventTypes/ClientEvents';
 import ServerEvents from './eventTypes/ServerEvents';
 import { OnlineUserManager } from "../OnlineUserManager";
+import { TokenData } from '../types/TokenData';
 
-// TODO valutare se importarla da qualche parte
-interface TokenData {
-  name: string;
-  email: string;
-}
 
 /**
  * Registers to the specified Client socket the handlers about the online/offline managment

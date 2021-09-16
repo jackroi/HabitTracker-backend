@@ -66,6 +66,7 @@ import {
   InternalDbErrorResponseBody,
 } from './httpTypes/responses';
 import { validateEmail } from './utils/utils';
+import { TokenData } from './types/TokenData';
 
 declare global {
   namespace Express {
@@ -76,10 +77,6 @@ declare global {
   }
 }
 
-interface TokenData {
-  name: string;
-  email: string;
-}
 
 function generateJwtToken(tokenData: TokenData): string {
   console.info(`Generating token for ${tokenData.email}`);
