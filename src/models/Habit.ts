@@ -5,7 +5,6 @@ import { HistoryEntry, HistoryEntrySchema } from './HistoryEntry';
 import { DateTime, DurationObjectUnits } from 'luxon';
 
 
-// TODO valutare se renderlo un type = 'DAILY' | 'WEEKLY' | 'MONTHLY
 export enum HabitType {
   DAILY = 'DAILY',
   WEEKLY = 'WEEKLY',
@@ -27,7 +26,6 @@ export interface Habit {
   type: HabitType;
   archived: boolean;
 
-  // TODO valutare se ha senso che sia embedded
   history: HistoryEntry[];
 
   userEmail: string;
@@ -81,8 +79,10 @@ function sameDay(d1: Date, d2: Date) {
 }
 
 HabitSchema.methods.insertHistoryEntry = function(historyEntry: HistoryEntry): void {
-  // TODO eventualmente implementazione più efficiente
+  // TODO eventualmente implementazione più efficiente (probabilmente non la farò, però ha senso scrivere una nota)
+  // TODO note: this method could be implemented more efficiently, but for simplicity we have chosen this (write better)
   // ! attenzione, questa implementazione modifica id entry
+
   // insert history entry into the array, keeping it sorted
   this.deleteHistoryEntry(historyEntry.date);                               // remove entry of the same period
   this.history.push(historyEntry);                                          // insert the new one

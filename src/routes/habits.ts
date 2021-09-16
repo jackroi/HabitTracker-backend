@@ -492,7 +492,10 @@ router.post(`/:habit_id/history`, auth, async (req, res, next) => {
 });
 
 
-// TODO valutare l'utilizzo della data al posto dell'hist_id
+// TODO a better implementation would request the timezone of the client, too. (date depends on timezone)
+// TODO maybe not in this particular case (da capire)
+// TODO verificare se client e server interpretano date nello stesso modo (stessa timezone)
+
 
 /**
  * Updates (the type of) an entry of the habit history.
