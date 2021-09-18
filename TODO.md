@@ -2,12 +2,13 @@
 
 - Bump version script
 - Aggiungere test
+- Usare BadRequestErrorBody dove creo errori con statusCode 400
 
 
 ## Docs
 - Aggiungere header JWT token su endpoint protetti nella documentazione (+ scrivere login required)
 - Aggiungere versione davanti url ??? (/v0.0.1/login)
-- Aggiungere habit.type alla documentazione (esempio GET/POST habits)
+- Aggiungere habit.type (field) alla documentazione (esempio GET/POST habits)
 
 ## Date
 - Sostituire le varie creazioni di date con 'startOf', esempio: DateTime.now().startOf('day')

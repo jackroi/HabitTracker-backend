@@ -22,8 +22,9 @@ export default router;
 
 interface StreakInfo {
   startDate: DateTime,
-  length: number,         // number of completed and skipped (circa)
-  value: number,          // number of completed (circa)
+  length: number,         // number of completed and skipped (circa)  // TODO perchè circa ?
+  score: number,          // number of completed (circa)              // TODO perchè circa ?
+                          // score is the length of the streak minus the number of skips
   type: HabitType,
 };
 
@@ -67,7 +68,7 @@ function getStreakList(habit: Habit): StreakInfo[] {
   while (date <= todayDate && i < history.length) {
     let streakInfoStartDate = date;
     let length = 0;
-    let value = 0;
+    let score = 0;
 
     let stillContiguous: boolean = true;
     while (stillContiguous && i < history.length) {
@@ -80,7 +81,7 @@ function getStreakList(habit: Habit): StreakInfo[] {
         length++;
         completed = currentHistoryEntry.type === HistoryEntryType.COMPLETED;
         if (completed) {
-          value++;
+          score++;
         }
         i++;
       }
@@ -88,11 +89,11 @@ function getStreakList(habit: Habit): StreakInfo[] {
       date = date.plus(timeStep);
     }
 
-    if (value > 0) {
+    if (score > 0) {
       const streakInfo: StreakInfo = {
         startDate: streakInfoStartDate,
         length: length,
-        value: value,         // TODO maybe rename to something more meaningful, for example 'score' or 'lengthWithoutSkip'
+        score: score,
         type: habitType,
       };
       streakList.push(streakInfo);
@@ -115,11 +116,11 @@ function getBestAndCurrentStreakLength(habit: Habit): { bestStreakLength: number
   if (streakList.length > 0) {
     // There is at least a streak
 
-    // Find the best (longest streak) and get its length (more precisely its 'value')
-    const bestStreak = streakList.reduce((prev, current) => (prev.value > current.value) ? prev : current, streakList[0]);
-    bestStreakLength = bestStreak.value;
+    // Find the best (longest streak) and get its length (more precisely its 'score')
+    const bestStreak = streakList.reduce((prev, current) => (prev.score > current.score) ? prev : current, streakList[0]);
+    bestStreakLength = bestStreak.score;
 
-    // Calculate the value of the current streak
+    // Calculate the score of the current streak
 
     // Get the last streak
     const lastStreak = streakList[streakList.length-1];
@@ -159,7 +160,7 @@ function getBestAndCurrentStreakLength(habit: Habit): { bestStreakLength: number
     // It is considered active if it has been completed or skipped in the current or previous 'period'
     // (day, week, or month, depending on habit type)
     if (streakEndDate.hasSame(todayDate, unit) || streakEndDate.hasSame(previousPeriodDate, unit)) {
-      currentStreakLength = lastStreak.value;
+      currentStreakLength = lastStreak.score;
     }
   }
 

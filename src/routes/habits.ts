@@ -205,12 +205,24 @@ router.post(`/`, auth, async (req, res, next) => {
 
   try {
     const newHabitData = {
-      name: req.body.name,
-      category: req.body.category,
+      name: req.body.name.trim(),
+      category: req.body.category.trim(),
       type: req.body.type,
       email: req.user!.email,
     };
 
+    // Ensure the current user has no habit with that name
+    const habitWithThatName = await habit.getModel().findOne({ userEmail: newHabitData.email, name: newHabitData.name }).exec();
+    if (habitWithThatName) {
+      const errorBody: ErrorResponseBody = {
+        error: true,
+        statusCode: 409,
+        errorMessage: 'A habit with this name already exists',
+      }
+      return next(errorBody);
+    }
+
+    // Create the new habit
     const newHabit = await habit.newHabit(newHabitData).save();
     console.info('New habit created', newHabit);
     const returnedHabit = {
