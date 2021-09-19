@@ -129,8 +129,6 @@ router.get(`/`, auth, async (req, res, next) => {
       const returnedHabits = habits
         .filter((habit) => {
           // Filter out all the habits that not existed in the given date
-          // TODO valutare se voglio davvero non mostrare habit che in givenDate non erano ancora stati creati
-          // return true;
           return DateTime.fromISO(habit.creationDate.toISOString()).startOf('day').toUTC() <= givenDate;
         })
         .map((habit) => {
@@ -458,7 +456,7 @@ router.get(`/:habit_id/history`, auth, async (req, res, next) => {
 
 /**
  * Adds a new entry to the habit history.
- * TODO valutare se va bene che, in caso una entry esista già per quella data, venga sovrascritta
+ * TODO scrivere in commento che fa overwrite se esisteva già una entry per quella data
  */
 router.post(`/:habit_id/history`, auth, async (req, res, next) => {
   if (!isAddHistoryEntryRequestBody(req.body)) {
@@ -509,7 +507,7 @@ router.post(`/:habit_id/history`, auth, async (req, res, next) => {
 });
 
 
-// TODO a better implementation would request the timezone of the client, too. (date depends on timezone)
+// TODO a better implementation would require the timezone of the client, too. (date depends on timezone)
 // TODO maybe not in this particular case (da capire)
 // TODO verificare se client e server interpretano date nello stesso modo (stessa timezone)
 

@@ -50,22 +50,6 @@ export interface UserModel extends mongoose.Model<UserDocument> {
 }
 
 
-// type guard
-// TODO capire se serve
-export const isUser = (arg: any): arg is User => {
-  return arg
-    && arg.name
-    && typeof(arg.name) == 'string'
-    && arg.email
-    && typeof(arg.email) == 'string'
-    && arg.passwordDigest
-    && typeof(arg.passwordDigest) == 'string'
-    && arg.salt
-    && typeof(arg.salt) == 'string'
-    && arg.registrationDate
-    && arg.registrationDate instanceof Date
-};
-
 const UserSchema = new mongoose.Schema<UserDocument, UserModel>({
   name: {
     type: mongoose.SchemaTypes.String,

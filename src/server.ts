@@ -179,9 +179,6 @@ app.post(`/v${version}/register`, async (req, res, next) => {
    * - password: string
    */
 
-  // TODO pensare se mettere try catch
-  // TODO valutare se fare un refactoring del flow di validazione
-
   if (!isRegistrationRequestBody(req.body)) {
     console.warn(`Wrong registration body content\n${JSON.stringify(req.body, null, 2)}`);
     const errorBody: BadRequestErrorResponseBody = new BadRequestErrorResponseBody(
@@ -198,20 +195,25 @@ app.post(`/v${version}/register`, async (req, res, next) => {
   };
 
   // input validation
-  let error: BadRequestErrorResponseBody | null = null;
-  if (typeof(newUser.name) !== 'string' || newUser.name.trim().length === 0) {
-    error = new BadRequestErrorResponseBody('Bad request: invalid field "name"');
+  let error: ErrorResponseBody | null = null;
+  try {
+    if (typeof(newUser.name) !== 'string' || newUser.name.trim().length === 0) {
+      error = new BadRequestErrorResponseBody('Bad request: invalid field "name"');
+    }
+    else if (typeof(newUser.email) !== 'string'
+        || newUser.email.trim().length === 0
+        || !validateEmail(newUser.email.trim())) {
+      error = new BadRequestErrorResponseBody('Bad request: invalid field "email"');
+    }
+    else if (typeof(newUser.password) !== 'string' || newUser.password.trim().length === 0) {
+      error = new BadRequestErrorResponseBody('Bad request: invalid field "password"');
+    }
+    else if ((await user.getModel().findOne({ email: newUser.email.trim() }).exec())) {
+      error = new BadRequestErrorResponseBody('This email is already registered');
+    }
   }
-  else if (typeof(newUser.email) !== 'string'
-      || newUser.email.trim().length === 0
-      || !validateEmail(newUser.email.trim())) {
-    error = new BadRequestErrorResponseBody('Bad request: invalid field "email"');
-  }
-  else if (typeof(newUser.password) !== 'string' || newUser.password.trim().length === 0) {
-    error = new BadRequestErrorResponseBody('Bad request: invalid field "password"');
-  }
-  else if ((await user.getModel().findOne({ email: newUser.email.trim() }).exec())) {
-    error = new BadRequestErrorResponseBody('This email is already registered');
+  catch (err) {
+    error = new InternalDbErrorResponseBody();
   }
 
   if (error) {

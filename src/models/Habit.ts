@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-import { User, UserDocument, isUser } from './User';
+import { User, UserDocument } from './User';
 import { HistoryEntry, HistoryEntrySchema } from './HistoryEntry';
 import { DateTime, DurationObjectUnits } from 'luxon';
 
@@ -79,9 +79,9 @@ function sameDay(d1: Date, d2: Date) {
 }
 
 HabitSchema.methods.insertHistoryEntry = function(historyEntry: HistoryEntry): void {
-  // TODO eventualmente implementazione più efficiente (probabilmente non la farò, però ha senso scrivere una nota)
-  // TODO note: this method could be implemented more efficiently, but for simplicity we have chosen this (write better)
-  // ! attenzione, questa implementazione modifica id entry
+  // Note: this method is implemented in an unefficient way, a better implementation
+  // could be done in the future, but for now the semplicity is preferred.
+  // ! Warning: this implementation modifies the id of the history entry when an entry already exists with the same date
 
   // insert history entry into the array, keeping it sorted
   this.deleteHistoryEntry(historyEntry.date);                               // remove entry of the same period
