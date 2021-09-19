@@ -15,6 +15,7 @@ import {
 } from '../httpTypes/requests';
 import {
   AddHabitResponseBody,
+  BadRequestErrorResponseBody,
   ErrorResponseBody,
   GetHabitHistoryResponseBody,
   GetHabitResponseBody,
@@ -29,6 +30,7 @@ import { Habit, HabitState, HabitType } from '../models/Habit';
 import { HistoryEntry, HistoryEntryDocument, HistoryEntryType } from '../models/HistoryEntry';
 import { DateTime, DurationObjectUnits, DurationUnits } from 'luxon';
 import { OnlineUserManager } from '../OnlineUserManager';
+import { validateIsoDate } from '../utils/utils';
 
 
 const router = express.Router();
@@ -110,7 +112,15 @@ router.get(`/`, auth, async (req, res, next) => {
 
     // date param validation
     if (date && typeof(date) === 'string') {
-      // TODO maybe regex to check date format
+      // Check date format (YYYY-MM-DD)
+      if (!validateIsoDate(date)) {
+        console.warn('Invalid format of the "date" parameter');
+        const errorBody: ErrorResponseBody = new BadRequestErrorResponseBody(
+          'Invalid format of the "date" parameter'
+        );
+        return next(errorBody);
+      }
+
       // Get date
       const givenDate = DateTime.fromISO(new Date(date).toISOString()).toUTC().startOf('day');
 
@@ -515,7 +525,16 @@ router.post(`/:habit_id/history`, auth, async (req, res, next) => {
  * date: YYYY-MM-DD (string)
  */
 router.put(`/:habit_id/history/:date`, auth, async (req, res, next) => {
-  // TODO maybe check date format
+  // Check date format (YYYY-MM-DD)
+  if (!validateIsoDate(req.params.date)) {
+    console.warn('Invalid format of the "date" parameter');
+    const errorBody: ErrorResponseBody = new BadRequestErrorResponseBody(
+      'Invalid format of the "date" parameter'
+    );
+    return next(errorBody);
+  }
+
+  // Check body format
   if (!isUpdateHistoryEntryRequestBody(req.body)) {
     console.warn(`Wrong update history entry body content\n${JSON.stringify(req.body, null, 2)}`);
     const errorBody: ErrorResponseBody = {
@@ -567,11 +586,20 @@ router.put(`/:habit_id/history/:date`, auth, async (req, res, next) => {
 
 
 /**
- * Deletes (the type of) an entry of the habit history.
+ * Deletes an entry of the habit history.
  * TODO scrivere meglio documentazione
  * date: YYYY-MM-DD (string)
  */
 router.delete(`/:habit_id/history/:date`, auth, async (req, res, next) => {
+  // Check date format (YYYY-MM-DD)
+  if (!validateIsoDate(req.params.date)) {
+    console.warn('Invalid format of the "date" parameter');
+    const errorBody: ErrorResponseBody = new BadRequestErrorResponseBody(
+      'Invalid format of the "date" parameter'
+    );
+    return next(errorBody);
+  }
+
   try {
     const requestedHabit = await habit.getModel()
       .findOne({ _id: req.params.habit_id, userEmail: req.user!.email })
