@@ -21,6 +21,7 @@ import {
   GetHabitResponseBody,
   GetHabitsForDateResponseBody,
   GetHabitsResponseBody,
+  InternalDbErrorResponseBody,
   SuccessResponseBody
 } from '../httpTypes/responses';
 
@@ -193,7 +194,7 @@ router.get(`/`, auth, async (req, res, next) => {
   catch (err) {
     // Internal DB error happened
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 })
@@ -205,11 +206,9 @@ router.get(`/`, auth, async (req, res, next) => {
 router.post(`/`, auth, async (req, res, next) => {
   if (!isAddHabitRequestBody(req.body)) {
     console.warn(`Wrong add habit body content\n${JSON.stringify(req.body, null, 2)}`);
-    const errorBody: ErrorResponseBody = {
-      error: true,
-      statusCode: 400,
-      errorMessage: 'Wrong add habit body content',
-    };
+    const errorBody: ErrorResponseBody = new BadRequestErrorResponseBody(
+      'Wrong add habit body content'
+    );
     return next(errorBody);
   }
 
@@ -261,7 +260,7 @@ router.post(`/`, auth, async (req, res, next) => {
   catch (err) {
     // Internal DB error happened
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
@@ -304,7 +303,7 @@ router.get(`/:habit_id`, auth, async (req, res, next) => {
   catch (err) {
     // Internal DB error happened
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
@@ -315,11 +314,9 @@ router.get(`/:habit_id`, auth, async (req, res, next) => {
 router.put(`/:habit_id`, auth, async (req, res, next) => {
   if (!isUpdateHabitRequestBody(req.body)) {
     console.warn(`Wrong update habit body content\n${JSON.stringify(req.body, null, 2)}`);
-    const errorBody: ErrorResponseBody = {
-      error: true,
-      statusCode: 400,
-      errorMessage: 'Wrong update habit body content',
-    };
+    const errorBody: ErrorResponseBody = new BadRequestErrorResponseBody(
+      'Wrong update habit body content'
+    );
     return next(errorBody);
   }
 
@@ -365,7 +362,7 @@ router.put(`/:habit_id`, auth, async (req, res, next) => {
   catch (err) {
     // Internal DB error happened
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
@@ -404,7 +401,7 @@ router.delete(`/:habit_id`, auth, async (req, res, next) => {
   catch (err) {
     // Internal DB error happened
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
@@ -453,7 +450,7 @@ router.get(`/:habit_id/history`, auth, async (req, res, next) => {
   catch (err) {
     // Internal DB error happened
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
@@ -466,11 +463,9 @@ router.get(`/:habit_id/history`, auth, async (req, res, next) => {
 router.post(`/:habit_id/history`, auth, async (req, res, next) => {
   if (!isAddHistoryEntryRequestBody(req.body)) {
     console.warn(`Wrong add history entry body content\n${JSON.stringify(req.body, null, 2)}`);
-    const errorBody: ErrorResponseBody = {
-      error: true,
-      statusCode: 400,
-      errorMessage: 'Wrong add history entry body content',
-    };
+    const errorBody: ErrorResponseBody = new BadRequestErrorResponseBody(
+      'Wrong add history entry body content'
+    );
     return next(errorBody);
   }
 
@@ -508,7 +503,7 @@ router.post(`/:habit_id/history`, auth, async (req, res, next) => {
   catch (err) {
     // Internal DB error happened
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
@@ -537,11 +532,9 @@ router.put(`/:habit_id/history/:date`, auth, async (req, res, next) => {
   // Check body format
   if (!isUpdateHistoryEntryRequestBody(req.body)) {
     console.warn(`Wrong update history entry body content\n${JSON.stringify(req.body, null, 2)}`);
-    const errorBody: ErrorResponseBody = {
-      error: true,
-      statusCode: 400,
-      errorMessage: 'Wrong update history entry body content',
-    };
+    const errorBody: ErrorResponseBody = new BadRequestErrorResponseBody(
+      'Wrong update history entry body content'
+    );
     return next(errorBody);
   }
 
@@ -579,7 +572,7 @@ router.put(`/:habit_id/history/:date`, auth, async (req, res, next) => {
   catch (err) {
     // Internal DB error happened
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
@@ -631,7 +624,7 @@ router.delete(`/:habit_id/history/:date`, auth, async (req, res, next) => {
   catch (err) {
     // Internal DB error happened
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });

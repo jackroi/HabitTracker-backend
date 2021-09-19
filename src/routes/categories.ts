@@ -5,7 +5,7 @@
 
 import express from 'express';
 import { isUpdateCategoryNameRequestBody } from '../httpTypes/requests';
-import { ErrorResponseBody, GetCategoriesResponseBody, SuccessResponseBody } from '../httpTypes/responses';
+import { BadRequestErrorResponseBody, ErrorResponseBody, GetCategoriesResponseBody, InternalDbErrorResponseBody, SuccessResponseBody } from '../httpTypes/responses';
 
 import auth from '../middlewares/auth'
 
@@ -36,7 +36,7 @@ router.get(`/`, auth, async (req, res, next) => {
   }
   catch (err) {
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
@@ -48,11 +48,9 @@ router.get(`/`, auth, async (req, res, next) => {
 router.put(`/:category_name`, auth, async (req, res, next) => {
   if (!isUpdateCategoryNameRequestBody(req.body)) {
     console.warn(`Wrong update category name body content\n${JSON.stringify(req.body, null, 2)}`);
-    const errorBody: ErrorResponseBody = {
-      error: true,
-      statusCode: 400,
-      errorMessage: 'Wrong update category name body content',
-    };
+    const errorBody: ErrorResponseBody = new BadRequestErrorResponseBody(
+      'Wrong update category name body content'
+    );
     return next(errorBody);
   }
 
@@ -73,7 +71,7 @@ router.put(`/:category_name`, auth, async (req, res, next) => {
   catch (err) {
     // Internal DB error happened
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });

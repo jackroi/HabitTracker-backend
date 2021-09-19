@@ -4,7 +4,7 @@
 
 
 import express from 'express';
-import { GetUserResponseBody, SuccessResponseBody } from '../httpTypes/responses';
+import { GetUserResponseBody, InternalDbErrorResponseBody, SuccessResponseBody } from '../httpTypes/responses';
 
 import auth from '../middlewares/auth'
 
@@ -28,7 +28,7 @@ router.get(`/`, auth, async (req, res, next) => {
     if (!userInfo) {
       // User not found
       console.warn(`An invalid user requested information about his account, ${req.user!.email}`);
-      const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal server error' };
+      const errorBody = new InternalDbErrorResponseBody();
       return next(errorBody);
     }
 
@@ -49,7 +49,7 @@ router.get(`/`, auth, async (req, res, next) => {
   catch (err) {
     // An internal DB error occurred
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
@@ -83,7 +83,7 @@ router.delete(`/`, auth, async (req, res, next) => {
   catch (err) {
     // An internal DB error occurred
     console.error(`Internal DB error\n${JSON.stringify(err, null, 2)}`);
-    const errorBody = { error: true, statusCode: 500, errorMessage: 'Internal DB error' };
+    const errorBody = new InternalDbErrorResponseBody();
     return next(errorBody);
   }
 });
