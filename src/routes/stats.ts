@@ -261,7 +261,7 @@ router.get(`/`, auth, async (req, res, next) => {
     for (let habit of habits) {
       totalPeriods += numberOfPeriodsSinceCreation(habit);
     }
-    const completedPercentage = completedCount / totalPeriods * 100;
+    const completedPercentage = totalPeriods === 0 ? 100 : completedCount / totalPeriods * 100;
 
     // Prepare and return the response body
     const body: GetGeneralStatsResponseBody = {
@@ -306,7 +306,10 @@ router.get(`/:habit_id`, auth, async (req, res, next) => {
     const completedCount = numberOfTimesCompleted(requestedHabit);
 
     // percentage of times the habit has been completed
-    const completedPercentage = completedCount / numberOfPeriodsSinceCreation(requestedHabit) * 100;
+    const numberOfPeriodsSinceCreation_ = numberOfPeriodsSinceCreation(requestedHabit);
+    const completedPercentage = numberOfPeriodsSinceCreation_ === 0
+      ? 100
+      : completedCount / numberOfPeriodsSinceCreation_ * 100;
 
     // Prepare and return the response body
     const body: GetHabitStatsResponseBody = {
