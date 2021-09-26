@@ -5,7 +5,9 @@ FORMAT: 1A
 
 A simple API allowing consumers to manage habits.
 
-# Habit Tracker API root [/]
+# Group Habit Tracker API root
+
+# API metadata [/]
 
 This resource offers metadata (API version and list of endpoints) about the APIs.
 
@@ -17,7 +19,9 @@ This resource offers metadata (API version and list of endpoints) about the APIs
             "apiVersion": "0.0.1",
             "endpoints": [
                 "/",
-                "/login"
+                "/login",
+                "/register",
+                "/habits"
             ]
         }
 
@@ -84,6 +88,14 @@ Basic authentication.
 
 Retrieve information on the logged in user account.
 
+Authentication required.
+
++ Request View account information (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
 + Response 200 (application/json)
 
         {
@@ -100,6 +112,14 @@ Retrieve information on the logged in user account.
 
 Delete the account of the logged in user.
 
+Authentication required.
+
++ Request Delete account (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
 + Response 200 (application/json)
 
         {
@@ -112,13 +132,17 @@ Delete the account of the logged in user.
 
 Resources related to Habits in the API.
 
-## Habit collection [/habits{?limit}{?skip}{?category}{?filter}]
+## Habit collection [/habits{?limit}{?skip}{?category}{?filter}{?date}]
 
 This resource represents a collection of habits.
 
 ### List all habits [GET]
 
 Retrive the list of habits of the logged in user.
+
+If `date` query parameter is passed, the API returns the state of the habits in that date, too.
+
+Authentication required.
 
 + Parameters
 
@@ -130,6 +154,14 @@ Retrive the list of habits of the logged in user.
         + Default: ``
     + filter (enum, optional) - The type of habits to return (valid options are `all`, `archived`, `active`).
         + Default: `active`
+    + date (string, optional) - The date for which to return the habits, in the format YYYY-MM-DD. By default returns all the habits.
+        + Default: ``
+
++ Request List habits (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
 
 + Response 200 (application/json)
 
@@ -142,6 +174,7 @@ Retrive the list of habits of the logged in user.
                     "name": "Study",
                     "creationDate": "2021-02-02T00:00:00.000Z",
                     "category": "Learning",
+                    "type": "DAILY",
                     "archived": false
                 },
                 {
@@ -149,6 +182,7 @@ Retrive the list of habits of the logged in user.
                     "name": "Run",
                     "creationDate": "2021-03-05T00:00:00.000Z",
                     "category": "Sport",
+                    "type": "DAILY",
                     "archived": false
                 },
                 {
@@ -156,6 +190,43 @@ Retrive the list of habits of the logged in user.
                     "name": "Read",
                     "creationDate": "2021-03-07T00:00:00.000Z",
                     "category": "Learning",
+                    "type": "WEEKLY",
+                    "archived": false
+                }
+            ]
+        }
+
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "error": false,
+            "habits": [
+                {
+                    "id": "6086e696cdcf2b0858e8e8b5",
+                    "name": "Study",
+                    "creationDate": "2021-02-02T00:00:00.000Z",
+                    "category": "Learning",
+                    "type": "DAILY",
+                    "state": "SKIPPED",
+                    "archived": false
+                },
+                {
+                    "id": "6086e696cdcf2b0858e8e8b6",
+                    "name": "Run",
+                    "creationDate": "2021-03-05T00:00:00.000Z",
+                    "category": "Sport",
+                    "type": "DAILY",
+                    "state": "COMPLETED",
+                    "archived": false
+                },
+                {
+                    "id": "6086e696cdcf2b0858e8e8b7",
+                    "name": "Read",
+                    "creationDate": "2021-03-07T00:00:00.000Z",
+                    "category": "Learning",
+                    "type": "WEEKLY",
+                    "state": "NOT_COMPLETED",
                     "archived": false
                 }
             ]
@@ -167,15 +238,25 @@ Create a new habit.
 It takes a JSON object containing the habit name and category.
 It returns the newly created habit.
 
+Authentication required.
+
 + name (string) - The habit name
 + category (string) - The habit category
++ type (string) - The habit type (`DAILY`, `WEEKLY`, `MONTHLY`)
 
-+ Request Create new Habit (application/json)
++ Request Create new habit (application/json)
 
-        {
-            "name": "Run",
-            "category": "Sport"
-        }
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
+    + Body
+
+            {
+                "name": "Run",
+                "category": "Sport",
+                "type": "DAILY"
+            }
 
 + Response 201 (application/json)
 
@@ -187,6 +268,7 @@ It returns the newly created habit.
                 "name": "Run",
                 "creationDate": "2021-03-05T00:00:00.000Z",
                 "category": "Sport",
+                "type": "DAILY",
                 "archived": false
             }
         }
@@ -202,6 +284,14 @@ This resource represents a single habit.
 
 Retrive the habit details.
 
+Authentication required.
+
++ Request Get habit details (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
 + Response 200 (application/json)
 
         {
@@ -212,6 +302,7 @@ Retrive the habit details.
                 "name": "Run",
                 "creationDate": "2021-03-05T00:00:00.000Z",
                 "category": "Sport",
+                "type": "DAILY",
                 "archived": false
             }
         }
@@ -221,27 +312,47 @@ Retrive the habit details.
 Update the habit.
 It takes a JSON object containing at least one of the following fields: `name`, `category`, `archived`.
 
+Authentication required.
+
 + name (string) - The habit name
 + category (string) - The habit category
 + archived (boolean) - Whether the habit is archived or active
 
-+ Request Update Habit name (application/json)
++ Request Update habit name (application/json)
 
-        {
-            "name": "Run",
-        }
+    + Headers
 
-+ Request Update Habit category (application/json)
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
 
-        {
-            "category": "Sport",
-        }
+    + Body
 
-+ Request Archive Habit (application/json)
+            {
+                "name": "Run"
+            }
 
-        {
-            "archived": true,
-        }
++ Request Update habit category (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
+    + Body
+
+            {
+                "category": "Sport"
+            }
+
++ Request Archive habit (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
+    + Body
+
+            {
+                "archived": true
+            }
 
 + Response 200 (application/json)
 
@@ -253,6 +364,14 @@ It takes a JSON object containing at least one of the following fields: `name`, 
 ### Delete the habit [DELETE]
 
 Delete the habit.
+
+Authentication required.
+
++ Request Delete habit (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
 
 + Response 200 (application/json)
 
@@ -272,6 +391,14 @@ This resource represents the history of a single habit.
 
 Retrieve the history of the habit.
 
+Authentication required.
+
++ Request Get habit history (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
 + Response 200 (application/json)
 
         {
@@ -281,35 +408,43 @@ Retrieve the history of the habit.
                 {
                     "id": "6086e696cdcf2b0858e8e8b6",
                     "date": "2021-03-05T00:00:00.000Z",
-                    "type": 'completed'
+                    "type": 'COMPLETED'
                 },
                 {
                     "id": "6086e696cdcf2b0858e8e8b7",
                     "date": "2021-03-06T00:00:00.000Z",
-                    "type": 'skipped'
+                    "type": 'SKIPPED'
                 },
                 {
                     "id": "6086e696cdcf2b0858e8e8b8",
                     "date": "2021-03-07T00:00:00.000Z",
-                    "type": 'completed'
+                    "type": 'COMPLETED'
                 }
             ]
         }
 
 ### Add a new entry to the habit history [POST]
 
-Add a new entry to the habit history.
+Add a new entry to the habit history, or overwrite an already existing one.
 It takes a JSON object containing the date and the type of the history entry.
 
+Authentication required.
+
 + date (string) - The date of the history entry (ISO format)
-+ type (string) - The type of the history entry (`completed`, `skipped`)
++ type (string) - The type of the history entry (`COMPLETED`, `SKIPPED`)
 
-+ Request Add new entry to the Habit history (application/json)
++ Request Add new entry to the habit history (application/json)
 
-        {
-            "date": "2021-03-08T00:00:00.000Z",
-            "type": "completed"
-        }
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
+    + Body
+
+            {
+                "date": "2021-03-08T00:00:00.000Z",
+                "type": "COMPLETED"
+            }
 
 + Response 201 (application/json)
 
@@ -329,16 +464,24 @@ This resource represents a single history entry of a habit.
 
 ### Update the entry of the habit history [PUT]
 
-Update (the type of) an entry of the habit history.
+Update (the type of) an entry of the habit history, or add the entry to the history.
 It takes a JSON object containing the new type of the history entry.
 
-+ type (string) - The type of the history entry (`completed`, `skipped`)
+Authentication required.
 
-+ Request Update entry of the Habit history (application/json)
++ type (string) - The type of the history entry (`COMPLETED`, `SKIPPED`)
 
-        {
-            "type": "skipped"
-        }
++ Request Update entry of the habit history (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
+    + Body
+
+            {
+                "type": "COMPLETED"
+            }
 
 + Response 200 (application/json)
 
@@ -350,6 +493,14 @@ It takes a JSON object containing the new type of the history entry.
 ### Delete the entry from the habit history [DELETE]
 
 Delete the entry from the habit history.
+
+Authentication required.
+
++ Request Delete entry from the habit history (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
 
 + Response 200 (application/json)
 
@@ -371,14 +522,24 @@ This resource represents the general statistics of the logged in user.
 
 Retrive general statistics about the logged in user.
 
+Authentication required.
+
++ Request Get general statistics (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
 + Response 200 (application/json)
 
         {
             "statusCode": 200,
             "error": false,
             "stats": {
-                "habitCount": 3,
-                "TODO": "TODO: other stats"
+                "activeHabitCount": 3,
+                "archivedHabitCount": 0,
+                "completedCount": 10,
+                "completedPercentage": 65.7
             }
         }
 
@@ -393,14 +554,24 @@ This resource represents the statistics of a single habit.
 
 Retrive statistics about the habit.
 
+Authentication required.
+
++ Request Get habit statistics (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
 + Response 200 (application/json)
 
         {
             "statusCode": 200,
             "error": false,
             "stats": {
-                "bestStreak": 5,
-                "TODO": "TODO: other stats"
+                "bestStreak": 6,
+                "currentStreak": 4,
+                "completedCount": 20,
+                "completedPercentage": 70.2
             }
         }
 
@@ -417,6 +588,14 @@ This resource represents a collection of categories.
 
 Retrive the list of categories of habits of the logged in user.
 
+Authentication required.
+
++ Request List categories (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
+
 + Response 200 (application/json)
 
         {
@@ -429,29 +608,9 @@ Retrive the list of categories of habits of the logged in user.
             ]
         }
 
-### Create a new category [POST]
-TODO probabilmente non serve
-Create a new category.
-It takes a JSON object containing the category name.
-
-+ name (string) - The category name
-
-+ Request Create new Category (application/json)
-
-        {
-            "name": "Health"
-        }
-
-+ Response 201 (application/json)
-
-        {
-            "statusCode": 201,
-            "error": false
-        }
-
 ## Category [/categories/{category_name}]
 
-This resource represents a single habit.
+This resource represents a single category.
 
 + Parameters
     + category_name (string) - The name of the category.
@@ -461,26 +620,21 @@ This resource represents a single habit.
 Update the category name.
 It takes a JSON object containing the new category name.
 
+Authentication required.
+
 + name (string) - The new name of the category
 
 + Request Update category name (application/json)
 
-        {
-            "name": "Misc"
-        }
+    + Headers
 
-+ Response 200 (application/json)
+            Authorization: Bearer eyJhbGciOiJI...jwt-token
 
-        {
-            "statusCode": 200,
-            "error": false
-        }
+    + Body
 
-### Delete the category [DELETE]
-
-Delete the entry from the habit history.
-TODO: Only if the category is not used (però per ora non ho una collection di category).
-TODO probabilmente non serve.
+            {
+                "name": "Misc"
+            }
 
 + Response 200 (application/json)
 
