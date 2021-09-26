@@ -75,13 +75,3 @@ router.put(`/:category_name`, auth, async (req, res, next) => {
     return next(errorBody);
   }
 });
-
-
-
-/**
- * Delete the category.
- * TODO non serve in realtà
- */
-router.delete(`/:category_name`, auth, async (req, res, next) => {
-
-});
