@@ -105,7 +105,6 @@ router.post(`/register`, async (req, res, next) => {
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
-    registrationDate: new Date(),
   };
 
   // input validation

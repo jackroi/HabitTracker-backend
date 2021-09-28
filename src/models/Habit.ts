@@ -132,7 +132,7 @@ export const getModel = (): HabitModel => {
   return habitModel;
 };
 
-type NewHabitParams = {
+export type NewHabitParams = {
   name: string;
   category: string;
   email: string;

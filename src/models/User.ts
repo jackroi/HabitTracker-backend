@@ -100,11 +100,11 @@ export const getModel = (): UserModel => {
 };
 
 
-type NewUserParams = {
+export type NewUserParams = {
   name: string;
   email: string;
   password: string;
-  registrationDate: Date;
+  registrationDate?: Date;
 }
 
 export const newUser = (data: NewUserParams): UserDocument => {
@@ -117,7 +117,7 @@ export const newUser = (data: NewUserParams): UserDocument => {
     email: data.email,
     passwordDigest: digest,
     salt: salt,
-    registrationDate: new Date(),
+    registrationDate: data.registrationDate || new Date(),
   };
 
   return new userModel(user);
