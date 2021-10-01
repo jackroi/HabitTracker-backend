@@ -7,19 +7,21 @@ console.info('Server starting...');
 
 // load .env into process.env
 import dotenv = require('dotenv');
-const result = dotenv.config()
+if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+  const result = dotenv.config()
 
-if (result.error) {
-  console.error('Unable to load \'.env\' file. Please provide one to store the JWT secret key');
-  process.exit(-1);
-}
-if (!process.env.JWT_SECRET
-  || !process.env.DB_HOST
-  || !process.env.DB_PORT
-  || !process.env.DB_NAME
-  || !process.env.SERVER_PORT) {
-  console.error('\'.env\' file loaded but doesn\'t contain some required key-value pairs');
-  process.exit(-1);
+  if (result.error) {
+    console.error('Unable to load \'.env\' file. Please provide one to store the JWT secret key');
+    process.exit(-1);
+  }
+  if (!process.env.JWT_SECRET
+    || !process.env.DB_HOST
+    || !process.env.DB_PORT
+    || !process.env.DB_NAME
+    || !process.env.SERVER_PORT) {
+    console.error('\'.env\' file loaded but doesn\'t contain some required key-value pairs');
+    process.exit(-1);
+  }
 }
 if (!process.env.npm_package_version) {
   console.error('Missing environment variabile npm_package_version');
