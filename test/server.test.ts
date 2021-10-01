@@ -99,32 +99,52 @@ describe('Root endpoints', () => {
 
 });
 
+describe('Authentication endpoints', () => {
+
+  describe('POST /register', () => {
+
+  });
+
+});
+
+
+describe('User endpoints', () => {
+
+  describe('GET /user', () => {
+
+  });
+
+});
 
 describe('Habit endpoints', () => {
 
-  describe('GET /habits', () => {
-    const habitList: habit.NewHabitParams[] = [
-      {
-        name: 'Run',
-        category: 'Sport',
-        type: habit.HabitType.DAILY,
-        email: testUser.email,
-      },
-      {
-        name: 'Read',
-        category: 'Productivity',
-        type: habit.HabitType.WEEKLY,
-        email: testUser.email,
-      },
-    ];
+  const habitList: habit.NewHabitParams[] = [
+    {
+      name: 'Run',
+      category: 'Sport',
+      type: habit.HabitType.DAILY,
+      email: testUser.email,
+    },
+    {
+      name: 'Read',
+      category: 'Productivity',
+      type: habit.HabitType.WEEKLY,
+      email: testUser.email,
+    },
+  ];
 
-    beforeEach(() => {
-      const promises = [];
-      for (let item of habitList) {
-        promises.push(habit.newHabit(item).save());
-      }
-      return Promise.all(promises);
-    });
+
+  beforeEach(() => {
+    const promises = [];
+    for (let item of habitList) {
+      promises.push(habit.newHabit(item).save());
+    }
+    return Promise.all(promises);
+  });
+
+
+
+  describe('GET /habits', () => {
 
     it('should return habit list without state if date param not specified', (done) => {
       request(app)
@@ -190,5 +210,98 @@ describe('Habit endpoints', () => {
     });
 
   });
+
+
+  describe('GET /habits/:id', () => {
+
+    it('should return habit details', (done) => {
+      const habit0 = habitList[0];
+      habit.getModel().findOne({ name: habit0.name })
+        .then((expectedHabit) => {
+          request(app)
+            .get(`/v${VERSION}/habits/${expectedHabit!.id}`)
+            .set('Authorization', `Bearer ${token}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .then((response) => {
+              expect(response.body.statusCode).toBe(response.statusCode);
+              expect(response.body.error).toBe(false);
+              expect(response.body.habit).toBeTruthy();
+
+              const returnedHabit = response.body.habit;
+              expect(returnedHabit).toBeTruthy();
+              expect(returnedHabit.id).toBe(expectedHabit!.id);
+              expect(returnedHabit.name).toBe(expectedHabit!.name);
+              expect(returnedHabit.category).toBe(expectedHabit!.category);
+              expect(returnedHabit.type).toBe(expectedHabit!.type);
+              expect(returnedHabit.creationDate).toBeTruthy();
+              expect(returnedHabit.archived).toBe(false);
+
+              done();
+            })
+            .catch(err => done(err));
+        })
+
+    });
+
+    it('should return error 404', (done) => {
+      const FAKE_ID = '999999999999';
+      request(app)
+        .get(`/v${VERSION}/habits/${FAKE_ID}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect('Content-Type', /json/)
+        .expect(404)
+        .then((response) => {
+          expect(response.body.statusCode).toBe(response.statusCode);
+          expect(response.body.error).toBe(true);
+          expect(response.body.habit).toBeUndefined();
+
+          done();
+        })
+        .catch(err => done(err));
+    });
+
+  });
+
+
+
+  describe('PUT /habits/:id', () => {
+
+    it('should archive habit', (done) => {
+      const habit0 = habitList[0];
+      habit.getModel().findOne({ name: habit0.name })
+        .then((expectedHabit) => {
+          request(app)
+            .put(`/v${VERSION}/habits/${expectedHabit!.id}`)
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+              archived: true,
+            })
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .then((response) => {
+              expect(response.body.statusCode).toBe(response.statusCode);
+              expect(response.body.error).toBe(false);
+
+              habit.getModel().findOne({ name: expectedHabit!.name, archived: true })
+                .then((expectedArchivedHabit) => {
+                  expect(expectedArchivedHabit).toBeTruthy();
+
+                  expect(expectedHabit!.name).toBe(expectedArchivedHabit!.name);
+                  expect(expectedHabit!.type).toBe(expectedArchivedHabit!.type);
+                  expect(expectedHabit!.category).toBe(expectedArchivedHabit!.category);
+                  expect(expectedHabit!.creationDate.toISOString()).toBe(expectedArchivedHabit!.creationDate.toISOString());
+
+                  done();
+                })
+
+            })
+            .catch(err => done(err));
+        });
+
+      });
+
+    });
+
 
 });
