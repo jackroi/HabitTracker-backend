@@ -85,7 +85,8 @@ mongoose.connect(databaseUrl, {
     registerOnlineUserHandlers(io, socket);
   });
 
-  server.listen(SERVER_PORT, () => console.info(`HTTP Server started on port ${SERVER_PORT}`));
+  const port = process.env.PORT || SERVER_PORT;
+  server.listen(port, () => console.info(`HTTP Server started on port ${port}`));
 })
 .catch((err) => {
   console.error('Error occurred during initialization');

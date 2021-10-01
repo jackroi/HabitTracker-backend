@@ -9,7 +9,8 @@
     "dev": "tsc-watch --noClear --onSuccess \"node ./dist/src/server.js\"",
     "init-db": "node dist/src/init-db.js",
     "test": "jest",
-    "postversion": "git push && git push --tags"
+    "postversion": "git push && git push --tags",
+    "heroku-postbuild": "npm run compile"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,9 @@
     "url": "https://github.com/jackroi/HabitTracker-backend/issues"
   },
   "homepage": "https://github.com/jackroi/HabitTracker-backend#readme",
+  "engines": {
+    "node": "14.16.1"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
