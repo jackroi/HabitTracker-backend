@@ -4,6 +4,8 @@
 
 
 import express from 'express';
+import mongoose from 'mongoose';
+
 import auth from '../middlewares/auth';
 
 import {
@@ -268,6 +270,11 @@ router.post(`/`, auth, async (req, res, next) => {
  * Retrives the habit details.
  */
 router.get(`/:habit_id`, auth, async (req, res, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.habit_id)) {
+    console.warn('User asked details about an unknown habit');
+    const errorBody = { error: true, statusCode: 404, errorMessage: 'Unknown habit' };
+    return next(errorBody);
+  }
   try {
     // Query the db for the habit
     const requestedHabit = await habit.getModel().findOne({
@@ -315,6 +322,11 @@ router.put(`/:habit_id`, auth, async (req, res, next) => {
     const errorBody: ErrorResponseBody = new BadRequestErrorResponseBody(
       'Wrong update habit body content'
     );
+    return next(errorBody);
+  }
+  if (!mongoose.Types.ObjectId.isValid(req.params.habit_id)) {
+    console.warn('User tried to update an unknown habit');
+    const errorBody = { error: true, statusCode: 404, errorMessage: 'Unknown habit' };
     return next(errorBody);
   }
 
@@ -370,6 +382,12 @@ router.put(`/:habit_id`, auth, async (req, res, next) => {
  * Delete the habit.
  */
 router.delete(`/:habit_id`, auth, async (req, res, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.habit_id)) {
+    console.warn('User tried to delete an unknown habit');
+    const errorBody = { error: true, statusCode: 404, errorMessage: 'Unknown habit' };
+    return next(errorBody);
+  }
+
   try {
     const queryResult = await habit.getModel()
       .deleteOne({ _id: req.params.habit_id, userEmail: req.user!.email })
@@ -418,6 +436,12 @@ router.delete(`/:habit_id`, auth, async (req, res, next) => {
  * TODO valutare skip e limit
  */
 router.get(`/:habit_id/history`, auth, async (req, res, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.habit_id)) {
+    console.warn('User asked for the history of an unknown habit');
+    const errorBody = { error: true, statusCode: 404, errorMessage: 'Unknown habit' };
+    return next(errorBody);
+  }
+
   try {
     const requestedHabit = await habit.getModel()
       .findOne({ _id: req.params.habit_id, userEmail: req.user!.email })
@@ -464,6 +488,11 @@ router.post(`/:habit_id/history`, auth, async (req, res, next) => {
     const errorBody: ErrorResponseBody = new BadRequestErrorResponseBody(
       'Wrong add history entry body content'
     );
+    return next(errorBody);
+  }
+  if (!mongoose.Types.ObjectId.isValid(req.params.habit_id)) {
+    console.warn('User asked to add an history entry to an unknown habit');
+    const errorBody = { error: true, statusCode: 404, errorMessage: 'Unknown habit' };
     return next(errorBody);
   }
 
@@ -518,6 +547,12 @@ router.post(`/:habit_id/history`, auth, async (req, res, next) => {
  * date: YYYY-MM-DD (string)
  */
 router.put(`/:habit_id/history/:date`, auth, async (req, res, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.habit_id)) {
+    console.warn('User asked to update an history entry to an unknown habit');
+    const errorBody = { error: true, statusCode: 404, errorMessage: 'Unknown habit' };
+    return next(errorBody);
+  }
+
   // Check date format (YYYY-MM-DD)
   if (!validateIsoDate(req.params.date)) {
     console.warn('Invalid format of the "date" parameter');
@@ -582,6 +617,12 @@ router.put(`/:habit_id/history/:date`, auth, async (req, res, next) => {
  * date: YYYY-MM-DD (string)
  */
 router.delete(`/:habit_id/history/:date`, auth, async (req, res, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.habit_id)) {
+    console.warn('User asked to delete an history entry of an unknown habit');
+    const errorBody = { error: true, statusCode: 404, errorMessage: 'Unknown habit' };
+    return next(errorBody);
+  }
+
   // Check date format (YYYY-MM-DD)
   if (!validateIsoDate(req.params.date)) {
     console.warn('Invalid format of the "date" parameter');
