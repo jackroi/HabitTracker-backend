@@ -47,10 +47,20 @@ const {
   DB_HOST,
   DB_PORT,
   DB_NAME,
+  DB_USER,
+  DB_PASSWORD,
   SERVER_PORT,
 } = process.env;
 
-mongoose.connect(`mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`, {
+let databaseUrl;
+if (!DB_USER || !DB_PASSWORD) {
+  databaseUrl = `mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`;
+}
+else {
+  databaseUrl = `mongodb+srv://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}`;  // ?retryWrites=true&w=majority
+}
+
+mongoose.connect(databaseUrl, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,

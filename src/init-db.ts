@@ -36,14 +36,20 @@ const {
   DB_HOST,
   DB_PORT,
   DB_NAME,
+  DB_USER,
+  DB_PASSWORD,
 } = process.env;
 
+let databaseUrl;
+if (!DB_USER || !DB_PASSWORD) {
+  databaseUrl = `mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`;
+}
+else {
+  databaseUrl = `mongodb+srv://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}`;  // ?retryWrites=true&w=majority
+}
 
-const DB_URL = `mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`;
 
-
-
-mongoose.connect(DB_URL, {
+mongoose.connect(databaseUrl, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
