@@ -63,7 +63,7 @@ function getStreakList(habit: Habit): StreakInfo[] {
   const startDate = DateTime.fromISO(habit.creationDate.toISOString()).toUTC();
   const todayDate = DateTime.now().toUTC();
 
-  let date = startDate.startOf(unit);
+  let date = startDate.startOf(unit).minus({ days: 1 });
   let i = 0;
   while (date <= todayDate && i < history.length) {
     let streakInfoStartDate = date;
