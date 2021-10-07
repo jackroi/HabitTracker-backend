@@ -433,7 +433,6 @@ router.delete(`/:habit_id`, auth, async (req, res, next) => {
 
 /**
  * Retrives the history of the habit.
- * TODO valutare skip e limit
  */
 router.get(`/:habit_id/history`, auth, async (req, res, next) => {
   if (!mongoose.Types.ObjectId.isValid(req.params.habit_id)) {
@@ -479,8 +478,7 @@ router.get(`/:habit_id/history`, auth, async (req, res, next) => {
 
 
 /**
- * Adds a new entry to the habit history.
- * TODO scrivere in commento che fa overwrite se esisteva già una entry per quella data
+ * Adds a new entry to the habit history (overwrite if already exists).
  */
 router.post(`/:habit_id/history`, auth, async (req, res, next) => {
   if (!isAddHistoryEntryRequestBody(req.body)) {
@@ -536,14 +534,8 @@ router.post(`/:habit_id/history`, auth, async (req, res, next) => {
 });
 
 
-// TODO a better implementation would require the timezone of the client, too. (date depends on timezone)
-// TODO maybe not in this particular case (da capire)
-// TODO verificare se client e server interpretano date nello stesso modo (stessa timezone)
-
-
 /**
  * Updates (the type of) an entry of the habit history.
- * TODO scrivere meglio documentazione
  * date: YYYY-MM-DD (string)
  */
 router.put(`/:habit_id/history/:date`, auth, async (req, res, next) => {
@@ -613,7 +605,6 @@ router.put(`/:habit_id/history/:date`, auth, async (req, res, next) => {
 
 /**
  * Deletes an entry of the habit history.
- * TODO scrivere meglio documentazione
  * date: YYYY-MM-DD (string)
  */
 router.delete(`/:habit_id/history/:date`, auth, async (req, res, next) => {

@@ -22,8 +22,8 @@ export default router;
 
 interface StreakInfo {
   startDate: DateTime,
-  length: number,         // number of completed and skipped (circa)  // TODO perchè circa ?
-  score: number,          // number of completed (circa)              // TODO perchè circa ?
+  length: number,         // number of completed and skipped
+  score: number,          // number of completed
                           // score is the length of the streak minus the number of skips
   type: HabitType,
 };

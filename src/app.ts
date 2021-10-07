@@ -51,7 +51,16 @@ export default function createApp(): express.Express {
       endpoints: [
         '/',
         '/login',
-        // TODO aggiungere tutti gli endpoint
+        '/register',
+        '/user',
+        '/habits',
+        '/habits/:habit_id',
+        '/habits/:habit_id/history',
+        '/habits/:habit_id/history/:date',
+        '/stats',
+        '/stats/:habit_id',
+        '/categories',
+        '/categories/:category_name',
       ],
     };
     return res.status(body.statusCode).json(body);
