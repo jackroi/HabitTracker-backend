@@ -1,6 +1,6 @@
 {
   "name": "habit-tracker-backend",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Backend that provides REST API for HabitTracker system",
   "main": "src/server.ts",
   "scripts": {
